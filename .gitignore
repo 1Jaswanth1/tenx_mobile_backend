@@ -38,3 +38,12 @@ storybook-static/
 /playwright/.cache/
 
 /.npm-only-allow
+
+# Drizzle
+drizzle/*.sql
+drizzle/*.json
+
+# Database
+*.db
+*.db-shm
+*.db-wal

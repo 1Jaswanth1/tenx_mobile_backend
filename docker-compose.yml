@@ -1,0 +1,119 @@
+version: '3.8'
+
+# Docker Compose Configuration for Local Development
+# This file sets up PostgreSQL and Redis for the healthcare application
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthcare-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: healthcare_app
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare-network
+
+  # Redis for BullMQ Job Queues
+  redis:
+    image: redis:7-alpine
+    container_name: healthcare-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthcare-network
+
+  # Optional: Redis Commander (Redis GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: healthcare-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - healthcare-network
+    profiles:
+      - tools
+
+  # Optional: pgAdmin (PostgreSQL GUI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: healthcare-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@healthcare.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - healthcare-network
+    profiles:
+      - tools
+
+# Volumes for data persistence
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+# Network for container communication
+networks:
+  healthcare-network:
+    driver: bridge
+
+# Usage Instructions:
+# 
+# Start all services:
+#   docker-compose up -d
+#
+# Start with GUI tools (pgAdmin & Redis Commander):
+#   docker-compose --profile tools up -d
+#
+# Stop all services:
+#   docker-compose down
+#
+# Stop and remove volumes (WARNING: This deletes all data):
+#   docker-compose down -v
+#
+# View logs:
+#   docker-compose logs -f
+#
+# Access services:
+#   PostgreSQL:       localhost:5432
+#   Redis:            localhost:6379
+#   pgAdmin:          http://localhost:5050 (if using --profile tools)
+#   Redis Commander:  http://localhost:8081 (if using --profile tools)
