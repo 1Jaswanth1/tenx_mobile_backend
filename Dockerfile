@@ -5,44 +5,36 @@
 # ==============================================================================
 # Base Stage - Install system dependencies
 # ==============================================================================
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 
 # Install system dependencies for document processing and runtime
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-        # Essential tools
         curl \
         git \
         ca-certificates \
-        # Python for document processing
         python3 \
         python3-pip \
         python3-venv \
-        # Build tools
         build-essential \
         libtool \
         autoconf \
         automake \
         pkg-config \
-        # Image processing libraries
         libjpeg-dev \
         libcairo2-dev \
         libgif-dev \
         libpango1.0-dev \
         libpixman-1-dev \
-        # Document processing tools
         libreoffice \
         poppler-utils \
         ghostscript \
         graphicsmagick \
         imagemagick \
-        # Java runtime for LibreOffice
         default-jre \
-        # Fonts for document rendering
         fonts-dejavu \
         fonts-liberation \
         fontconfig && \
-    # Clean up apt cache
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -139,7 +131,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 # Copy entrypoint script if it exists
-COPY --chown=nextjs:nodejs scripts/entrypoint.sh* /app/entrypoint.sh* || true
+COPY --chown=nextjs:nodejs scripts/entrypoint.sh* /app/entrypoint.sh*
 RUN if [ -f /app/entrypoint.sh ]; then chmod +x /app/entrypoint.sh; fi
 
 # Expose application port
