@@ -23,10 +23,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "postinstall": "npx patch-package -y",
     "coupling-graph": "npx madge --extensions js,jsx,ts,tsx,css,md,mdx ./ --exclude '.next|tailwind.config.js|reset.d.ts|prettier.config.js|postcss.config.js|playwright.config.ts|next.config.js|next-env.d.ts|instrumentation.ts|e2e/|README.md|.storybook/|.eslintrc.js' --image graph.svg",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
     "auth:generate": "npx @better-auth/cli@latest generate"
   },
   "dependencies": {
@@ -80,8 +76,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "drizzle-kit": "^0.31.6",
-    "drizzle-orm": "^0.44.7",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "ioredis": "^5.8.2",

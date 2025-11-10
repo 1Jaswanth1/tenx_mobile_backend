@@ -1,148 +1,640 @@
+/**
+ * 1DXR Tailwind CSS Configuration
+ * 
+ * This file contains the complete Tailwind CSS v4 configuration for the 1DXR platform,
+ * including brand colors, typography, and design system tokens.
+ * 
+ * @version 1.0
+ * @date November 2025
+ */
+
 @import 'tailwindcss';
 @import "tw-animate-css";
-/*
-  ---break---
-*/
+
+/* ============================================================================
+   CUSTOM VARIANTS
+   ============================================================================ */
+
+/**
+ * Dark mode variant configuration
+ * Enables dark mode styling with .dark class on parent elements
+ */
 @custom-variant dark (&:is(.dark *));
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+/* ============================================================================
+   BORDER COMPATIBILITY (Tailwind v3 → v4)
+   ============================================================================ */
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/**
+ * The default border color has changed to `currentColor` in Tailwind CSS v4.
+ * These compatibility styles ensure consistency with Tailwind CSS v3 behavior.
+ * 
+ * Note: To remove these styles in the future, add explicit border-color
+ * utilities to elements that depend on these defaults.
+ */
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
 }
-/*
-  ---break---
-*/
+
+/* ============================================================================
+   BRAND DESIGN TOKENS
+   ============================================================================ */
+
+/**
+ * 1DXR Brand-Specific Design System
+ * 
+ * These tokens define the core design system for the 1DXR platform,
+ * including colors, typography, spacing, and brand-specific utilities.
+ */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+    /* --------------------------------------------------------------------------
+       BORDER RADIUS TOKENS
+       Consistent rounded corners throughout the application
+       -------------------------------------------------------------------------- */
+    --radius-sm: calc(var(--radius) - 4px);    /* 6px - Small elements */
+    --radius-md: calc(var(--radius) - 2px);    /* 8px - Medium elements */
+    --radius-lg: var(--radius);                /* 10px - Large elements */
+    --radius-xl: calc(var(--radius) + 4px);    /* 14px - Extra large elements */
+
+    /* --------------------------------------------------------------------------
+       SHADCN/UI COLOR MAPPINGS
+       Standard shadcn/ui color system mapped to CSS variables
+       -------------------------------------------------------------------------- */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    /* --------------------------------------------------------------------------
+       CHART COLORS
+       Data visualization color palette
+       -------------------------------------------------------------------------- */
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    /* --------------------------------------------------------------------------
+       SIDEBAR COLORS
+       Navigation and sidebar-specific color tokens
+       -------------------------------------------------------------------------- */
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* --------------------------------------------------------------------------
+       1DXR BRAND COLORS
+       Custom brand color extensions
+       -------------------------------------------------------------------------- */
+
+    /* Primary Brand Colors */
+    --color-brand-cornflower: var(--brand-cornflower);          /* #568AFF */
+    --color-brand-green-blue: var(--brand-green-blue);          /* #0665BA */
+    --color-brand-rich-black: var(--brand-rich-black);          /* #001320 */
+    --color-brand-french-sky: var(--brand-french-sky);          /* #66ABFE */
+
+    /* Gradient Colors */
+    --color-brand-gradient-start: var(--brand-gradient-start);  /* #559EFF */
+    --color-brand-gradient-end: var(--brand-gradient-end);      /* #0065BA */
+
+    /* Typography Scale */
+    --font-family-primary: var(--font-poppins);
+    --font-family-accent: var(--font-sofia);
 }
-/*
-  ---break---
-*/
+
+/* ============================================================================
+   LIGHT MODE (DEFAULT)
+   ============================================================================ */
+
+/**
+ * Light theme color configuration
+ * Default color scheme for the application
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+    /* --------------------------------------------------------------------------
+       DESIGN SYSTEM TOKENS
+       -------------------------------------------------------------------------- */
+    --radius: 0.625rem; /* 10px - Base border radius */
+
+    /* --------------------------------------------------------------------------
+       BASE COLORS (Light Mode)
+       Using OKLCH color space for better color consistency
+       -------------------------------------------------------------------------- */
+    --background: oklch(1 0 0);                    /* Pure white background */
+    --foreground: oklch(0.145 0 0);                /* Near black text */
+
+    /* Card & Surface Colors */
+    --card: oklch(1 0 0);                          /* Card background */
+    --card-foreground: oklch(0.145 0 0);           /* Card text */
+
+    /* Popover Colors */
+    --popover: oklch(1 0 0);                       /* Popover background */
+    --popover-foreground: oklch(0.145 0 0);        /* Popover text */
+
+    /* Interactive Element Colors */
+    --primary: oklch(0.205 0 0);                   /* Primary action color */
+    --primary-foreground: oklch(0.985 0 0);        /* Text on primary */
+
+    --secondary: oklch(0.97 0 0);                  /* Secondary background */
+    --secondary-foreground: oklch(0.205 0 0);      /* Secondary text */
+
+    --muted: oklch(0.97 0 0);                      /* Muted background */
+    --muted-foreground: oklch(0.556 0 0);          /* Muted text */
+
+    --accent: oklch(0.97 0 0);                     /* Accent background */
+    --accent-foreground: oklch(0.205 0 0);         /* Accent text */
+
+    /* Destructive/Error Colors */
+    --destructive: oklch(0.577 0.245 27.325);      /* Error/destructive actions */
+
+    /* Border & Input Colors */
+    --border: oklch(0.922 0 0);                    /* Default border color */
+    --input: oklch(0.922 0 0);                     /* Input border color */
+    --ring: oklch(0.708 0 0);                      /* Focus ring color */
+
+    /* --------------------------------------------------------------------------
+       CHART COLORS (Light Mode)
+       Data visualization palette
+       -------------------------------------------------------------------------- */
+    --chart-1: oklch(0.646 0.222 41.116);          /* Chart color 1 - Orange */
+    --chart-2: oklch(0.6 0.118 184.704);           /* Chart color 2 - Teal */
+    --chart-3: oklch(0.398 0.07 227.392);          /* Chart color 3 - Blue */
+    --chart-4: oklch(0.828 0.189 84.429);          /* Chart color 4 - Green */
+    --chart-5: oklch(0.769 0.188 70.08);           /* Chart color 5 - Yellow */
+
+    /* --------------------------------------------------------------------------
+       SIDEBAR COLORS (Light Mode)
+       -------------------------------------------------------------------------- */
+    --sidebar: oklch(0.985 0 0);                   /* Sidebar background */
+    --sidebar-foreground: oklch(0.145 0 0);        /* Sidebar text */
+    --sidebar-primary: oklch(0.205 0 0);           /* Sidebar primary */
+    --sidebar-primary-foreground: oklch(0.985 0 0);/* Sidebar primary text */
+    --sidebar-accent: oklch(0.97 0 0);             /* Sidebar accent */
+    --sidebar-accent-foreground: oklch(0.205 0 0); /* Sidebar accent text */
+    --sidebar-border: oklch(0.922 0 0);            /* Sidebar border */
+    --sidebar-ring: oklch(0.708 0 0);              /* Sidebar focus ring */
+
+    /* --------------------------------------------------------------------------
+       1DXR BRAND COLORS (Light Mode)
+       Custom brand color tokens mapped to HEX values
+       -------------------------------------------------------------------------- */
+
+    /* Primary Brand Colors */
+    --brand-cornflower: #568AFF;       /* Cornflower Blue - Primary brand color */
+    --brand-green-blue: #0665BA;       /* Green-Blue - Secondary brand color */
+    --brand-rich-black: #001320;       /* Rich Black - Base/text color */
+    --brand-french-sky: #66ABFE;       /* French Sky Blue - Accent color */
+
+    /* Gradient Colors */
+    --brand-gradient-start: #559EFF;   /* Gradient start - Light blue */
+    --brand-gradient-end: #0065BA;     /* Gradient end - Dark blue */
+
+    /* Additional Brand Colors */
+    --brand-white: #FFFFFF;            /* Pure white */
+    --brand-light-blue-bg: #E0EEFF;    /* Light blue background */
+    --brand-medium-blue: #BFDCFF;      /* Medium blue fill */
+
+    /* --------------------------------------------------------------------------
+       TYPOGRAPHY
+       Font family definitions for the brand
+       -------------------------------------------------------------------------- */
+    --font-poppins: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-sofia: 'Sofia Sans Extra Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-/*
-  ---break---
-*/
+
+/* ============================================================================
+   DARK MODE
+   ============================================================================ */
+
+/**
+ * Dark theme color configuration
+ * Activated when .dark class is present on a parent element
+ */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+    /* --------------------------------------------------------------------------
+       BASE COLORS (Dark Mode)
+       Inverted color scheme for dark theme
+       -------------------------------------------------------------------------- */
+    --background: oklch(0.145 0 0);                /* Dark background */
+    --foreground: oklch(0.985 0 0);                /* Light text */
+
+    /* Card & Surface Colors */
+    --card: oklch(0.205 0 0);                      /* Card background */
+    --card-foreground: oklch(0.985 0 0);           /* Card text */
+
+    /* Popover Colors */
+    --popover: oklch(0.205 0 0);                   /* Popover background */
+    --popover-foreground: oklch(0.985 0 0);        /* Popover text */
+
+    /* Interactive Element Colors */
+    --primary: oklch(0.922 0 0);                   /* Primary action color */
+    --primary-foreground: oklch(0.205 0 0);        /* Text on primary */
+
+    --secondary: oklch(0.269 0 0);                 /* Secondary background */
+    --secondary-foreground: oklch(0.985 0 0);      /* Secondary text */
+
+    --muted: oklch(0.269 0 0);                     /* Muted background */
+    --muted-foreground: oklch(0.708 0 0);          /* Muted text */
+
+    --accent: oklch(0.269 0 0);                    /* Accent background */
+    --accent-foreground: oklch(0.985 0 0);         /* Accent text */
+
+    /* Destructive/Error Colors */
+    --destructive: oklch(0.704 0.191 22.216);      /* Error/destructive actions */
+
+    /* Border & Input Colors */
+    --border: oklch(1 0 0 / 10%);                  /* Subtle border */
+    --input: oklch(1 0 0 / 15%);                   /* Input border */
+    --ring: oklch(0.556 0 0);                      /* Focus ring */
+
+    /* --------------------------------------------------------------------------
+       CHART COLORS (Dark Mode)
+       Adjusted for dark backgrounds
+       -------------------------------------------------------------------------- */
+    --chart-1: oklch(0.488 0.243 264.376);         /* Chart color 1 - Purple */
+    --chart-2: oklch(0.696 0.17 162.48);           /* Chart color 2 - Green */
+    --chart-3: oklch(0.769 0.188 70.08);           /* Chart color 3 - Yellow */
+    --chart-4: oklch(0.627 0.265 303.9);           /* Chart color 4 - Pink */
+    --chart-5: oklch(0.645 0.246 16.439);          /* Chart color 5 - Orange */
+
+    /* --------------------------------------------------------------------------
+       SIDEBAR COLORS (Dark Mode)
+       -------------------------------------------------------------------------- */
+    --sidebar: oklch(0.205 0 0);                   /* Sidebar background */
+    --sidebar-foreground: oklch(0.985 0 0);        /* Sidebar text */
+    --sidebar-primary: oklch(0.488 0.243 264.376); /* Sidebar primary */
+    --sidebar-primary-foreground: oklch(0.985 0 0);/* Sidebar primary text */
+    --sidebar-accent: oklch(0.269 0 0);            /* Sidebar accent */
+    --sidebar-accent-foreground: oklch(0.985 0 0); /* Sidebar accent text */
+    --sidebar-border: oklch(1 0 0 / 10%);          /* Sidebar border */
+    --sidebar-ring: oklch(0.556 0 0);              /* Sidebar focus ring */
+
+    /* --------------------------------------------------------------------------
+       1DXR BRAND COLORS (Dark Mode)
+       Brand colors remain consistent in dark mode
+       -------------------------------------------------------------------------- */
+    --brand-cornflower: #568AFF;
+    --brand-green-blue: #0665BA;
+    --brand-rich-black: #001320;
+    --brand-french-sky: #66ABFE;
+    --brand-gradient-start: #559EFF;
+    --brand-gradient-end: #0065BA;
+    --brand-white: #FFFFFF;
+    --brand-light-blue-bg: #E0EEFF;
+    --brand-medium-blue: #BFDCFF;
 }
-/*
-  ---break---
-*/
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+/**
+ * Global base styles applied to all elements
+ * Ensures consistent styling across the application
+ */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    /* --------------------------------------------------------------------------
+       TYPOGRAPHY DEFAULTS
+       Base font configuration for the application
+       -------------------------------------------------------------------------- */
+    body {
+        font-family: var(--font-poppins);
+        font-weight: 400; /* Poppins Regular */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Headings use Poppins Semi Bold */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-poppins);
+        font-weight: 600; /* Poppins Semi Bold */
+    }
+}
+
+/* ============================================================================
+   BRAND UTILITIES
+   ============================================================================ */
+
+/**
+ * Custom utility classes for brand-specific styling
+ * Use these classes for brand-consistent design elements
+ */
+@layer utilities {
+    /* --------------------------------------------------------------------------
+       BRAND COLOR UTILITIES
+       Quick access to brand colors
+       -------------------------------------------------------------------------- */
+    .text-brand-cornflower {
+        color: var(--brand-cornflower);
+    }
+
+    .bg-brand-cornflower {
+        background-color: var(--brand-cornflower);
+    }
+
+    .text-brand-green-blue {
+        color: var(--brand-green-blue);
+    }
+
+    .bg-brand-green-blue {
+        background-color: var(--brand-green-blue);
+    }
+
+    .text-brand-rich-black {
+        color: var(--brand-rich-black);
+    }
+
+    .bg-brand-rich-black {
+        background-color: var(--brand-rich-black);
+    }
+
+    .text-brand-french-sky {
+        color: var(--brand-french-sky);
+    }
+
+    .bg-brand-french-sky {
+        background-color: var(--brand-french-sky);
+    }
+
+    /* --------------------------------------------------------------------------
+       BRAND GRADIENT UTILITIES
+       Primary brand gradient (P→S: #559EFF → #0065BA)
+       -------------------------------------------------------------------------- */
+    .bg-brand-gradient {
+        background: linear-gradient(
+                135deg,
+                var(--brand-gradient-start) 0%,
+                var(--brand-gradient-end) 100%
+        );
+    }
+
+    .bg-brand-gradient-vertical {
+        background: linear-gradient(
+                180deg,
+                var(--brand-gradient-start) 0%,
+                var(--brand-gradient-end) 100%
+        );
+    }
+
+    .bg-brand-gradient-horizontal {
+        background: linear-gradient(
+                90deg,
+                var(--brand-gradient-start) 0%,
+                var(--brand-gradient-end) 100%
+        );
+    }
+
+    .text-brand-gradient {
+        background: linear-gradient(
+                135deg,
+                var(--brand-gradient-start) 0%,
+                var(--brand-gradient-end) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* --------------------------------------------------------------------------
+       TYPOGRAPHY UTILITIES
+       Brand-specific font configurations
+       -------------------------------------------------------------------------- */
+    .font-poppins {
+        font-family: var(--font-poppins);
+    }
+
+    .font-sofia {
+        font-family: var(--font-sofia);
+    }
+
+    /* Accent font with proper styling */
+    .text-accent-label {
+        font-family: var(--font-sofia);
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    /* --------------------------------------------------------------------------
+       BRAND-SPECIFIC SHADOWS
+       Consistent shadow system
+       -------------------------------------------------------------------------- */
+    .shadow-brand {
+        box-shadow: 0px 27px 30.1px rgba(85, 158, 255, 0.12);
+    }
+
+    .shadow-brand-lg {
+        box-shadow: 0px 40px 50px rgba(85, 158, 255, 0.15);
+    }
+
+    /* --------------------------------------------------------------------------
+       BRAND-SPECIFIC BORDERS
+       Consistent border styles
+       -------------------------------------------------------------------------- */
+    .border-brand {
+        border-color: var(--brand-cornflower);
+    }
+
+    .border-brand-gradient {
+        border: 1px solid;
+        border-image: linear-gradient(
+                135deg,
+                var(--brand-gradient-start),
+                var(--brand-gradient-end)
+        ) 1;
+    }
+}
+
+/* ============================================================================
+   COMPONENT PATTERNS
+   ============================================================================ */
+
+/**
+ * Reusable component patterns specific to the 1DXR brand
+ */
+@layer components {
+    /* --------------------------------------------------------------------------
+       BRAND BUTTONS
+       Button styles consistent with brand guidelines
+       -------------------------------------------------------------------------- */
+    .btn-brand-primary {
+        @apply bg-brand-gradient text-white font-semibold px-6 py-3 rounded-lg;
+        @apply hover:opacity-90 transition-all duration-200;
+        @apply shadow-brand hover:shadow-brand-lg;
+    }
+
+    .btn-brand-secondary {
+        @apply bg-brand-green-blue text-white font-semibold px-6 py-3 rounded-lg;
+        @apply hover:opacity-90 transition-all duration-200;
+    }
+
+    .btn-brand-outline {
+        @apply border-2 border-brand-cornflower text-brand-cornflower font-semibold px-6 py-3 rounded-lg;
+        @apply hover:bg-brand-cornflower hover:text-white transition-all duration-200;
+    }
+
+    /* --------------------------------------------------------------------------
+       BRAND CARDS
+       Card styles with brand aesthetics
+       -------------------------------------------------------------------------- */
+    .card-brand {
+        @apply bg-card rounded-xl border border-border p-6;
+        @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+    }
+
+    .card-brand-gradient {
+        @apply bg-brand-gradient text-white rounded-xl p-6;
+        @apply shadow-brand;
+    }
+
+    /* --------------------------------------------------------------------------
+       BRAND BADGES
+       Small UI elements like status indicators
+       -------------------------------------------------------------------------- */
+    .badge-brand {
+        @apply inline-flex items-center px-3 py-1 rounded-full;
+        @apply bg-brand-cornflower/10 text-brand-cornflower;
+        @apply font-medium text-sm;
+    }
+
+    .badge-brand-accent {
+        @apply inline-flex items-center px-3 py-1 rounded-full;
+        @apply bg-brand-french-sky/10 text-brand-french-sky;
+        @apply font-medium text-sm;
+    }
+}
+
+/* ============================================================================
+   RESPONSIVE TYPOGRAPHY SCALE
+   ============================================================================ */
+
+/**
+ * Responsive typography system based on brand guidelines
+ * Scales appropriately across different screen sizes
+ */
+@layer base {
+    /* Mobile-first typography */
+    h1 {
+        @apply text-3xl leading-tight; /* 30px */
+    }
+
+    h2 {
+        @apply text-2xl leading-snug; /* 24px */
+    }
+
+    h3 {
+        @apply text-xl leading-normal; /* 20px */
+    }
+
+    /* Tablet and up */
+    @media (min-width: 768px) {
+        h1 {
+            @apply text-4xl; /* 36px */
+        }
+
+        h2 {
+            @apply text-3xl; /* 30px */
+        }
+
+        h3 {
+            @apply text-2xl; /* 24px */
+        }
+    }
+
+    /* Desktop and up */
+    @media (min-width: 1024px) {
+        h1 {
+            @apply text-5xl; /* 48px - Brand guideline size */
+        }
+
+        h2 {
+            @apply text-4xl; /* 36px - Brand guideline size */
+        }
+
+        h3 {
+            @apply text-3xl; /* 28px - Brand guideline size */
+        }
+    }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+/**
+ * Brand-specific animations and transitions
+ */
+@layer utilities {
+    .animate-brand-gradient {
+        background-size: 200% 200%;
+        animation: gradient-shift 3s ease infinite;
+    }
+
+    @keyframes gradient-shift {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+}
+
+/* ============================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================================================ */
+
+/**
+ * Accessibility improvements for better user experience
+ */
+@layer base {
+    /* Focus visible for keyboard navigation */
+    *:focus-visible {
+        @apply outline-2 outline-offset-2 outline-brand-cornflower;
+    }
+
+    /* Reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
