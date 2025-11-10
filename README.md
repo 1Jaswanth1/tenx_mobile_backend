@@ -1,95 +1,118 @@
-# 10xR Healthcare Platform Backend
+# 10xR Community Platform
 
-> **Enterprise-grade Next.js backend powering AI-driven healthcare delivery for both web and mobile applications**
+> **Next-generation community platform blending Reddit and Facebook, powered by Supabase and AI-driven healthcare innovation**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Latest-green)](https://supabase.com/)
 [![Better Auth](https://img.shields.io/badge/Better_Auth-1.3-green)](https://www.better-auth.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)](https://www.docker.com/)
 
 ---
 
-## 🏥 About 10xR
+## 🎯 About 10xR
 
-**10xR** is revolutionizing healthcare technology by creating an intelligent backend platform that powers both web-based administration and Flutter mobile applications. Our mission is to make healthcare technology more accessible, secure, and efficient through:
+**10xR** is revolutionizing community-driven healthcare technology by creating an intelligent platform that combines the best of Reddit's community engagement with Facebook's social connectivity. Our mission is to make healthcare technology more accessible, secure, and community-focused through:
 
-- **Unified Backend Architecture**: Single Next.js platform serving web admin panels and mobile APIs
-- **Edge ML Integration**: Supporting Flutter apps with on-device ML capabilities for privacy-first healthcare
-- **Real-Time Processing**: Instant data synchronization between mobile apps and web dashboards
-- **Healthcare Compliance**: HIPAA-ready infrastructure with comprehensive security controls
-- **Scalable Infrastructure**: Built to handle hospital-scale deployments with Docker-based orchestration
+- **Community-First Architecture**: Built as a full-featured web platform with future mobile API support
+- **Supabase-Powered Backend**: Real-time database, authentication, and storage in one unified platform
+- **AI-Driven Insights**: Intelligent content moderation, recommendations, and healthcare guidance
+- **Privacy-Focused Design**: HIPAA-ready infrastructure with comprehensive security controls
+- **Scalable Infrastructure**: Serverless architecture that grows with your community
 
 ### Core Mission
 
 We believe healthcare technology should:
-- 🔒 **Prioritize Privacy** - Patient data processed on-device when possible
-- ⚡ **Be Fast** - Sub-second response times for clinical workflows
-- 🌐 **Be Accessible** - Work seamlessly across web and mobile platforms
-- 🛡️ **Be Secure** - Enterprise-grade security with audit logging
-- 📊 **Be Insightful** - Real-time analytics for healthcare providers
+- 🔒 **Prioritize Privacy** - End-to-end encryption and HIPAA compliance
+- ⚡ **Be Fast** - Sub-second response times with edge computing
+- 🌐 **Be Community-Driven** - Reddit-style discussions with Facebook-like connections
+- 🛡️ **Be Secure** - Enterprise-grade security with row-level security policies
+- 📊 **Be Insightful** - AI-powered content discovery and personalized feeds
 
 ---
 
-## 🎯 Platform Architecture
+## 🏗 Architecture Overview
 
-### System Overview
+### Platform Design Philosophy
+
+**10xR is a web-first platform, not a backend service.**
+
+We're building a complete web application using Next.js 16, Supabase, and BetterAuth. This approach offers:
+
+1. **Single Codebase**: One application handles both web UI and API endpoints
+2. **Unified Authentication**: BetterAuth seamlessly integrates with Supabase for consistent sessions
+3. **Real-Time Everything**: Supabase subscriptions provide instant updates across the platform
+4. **Future-Proof**: Selected API routes will be exposed for mobile apps when needed
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                  10xR Backend Platform                    │
-│                    (Next.js 16)                          │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│  ┌─────────────────┐         ┌─────────────────┐        │
-│  │  Web Admin UI   │         │   REST APIs     │        │
-│  │  - Dashboard    │         │   - /api/auth   │        │
-│  │  - Analytics    │         │   - /api/data   │        │
-│  │  - Management   │         │   - /api/sync   │        │
-│  └─────────────────┘         └─────────────────┘        │
-│                                                           │
-└──────────────────────────────────────────────────────────┘
-           │                              │
-           │                              │
-           ▼                              ▼
-    ┌─────────────┐              ┌──────────────┐
-    │ PostgreSQL  │              │ Flutter App  │
-    │  Database   │              │   (Mobile)   │
-    │             │◄─────────────│ Edge ML/AI   │
-    └─────────────┘              └──────────────┘
-           │
-           │
-           ▼
-    ┌─────────────┐
-    │   Redis     │
-    │ Job Queues  │
-    └─────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│               10xR Community Platform                         │
+│                    (Next.js 16)                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌────────────────────┐         ┌─────────────────────┐     │
+│  │   Web Frontend     │         │   API Routes        │     │
+│  │  - Feed & Posts    │         │   - /api/posts      │     │
+│  │  - Communities     │         │   - /api/comments   │     │
+│  │  - User Profiles   │         │   - /api/users      │     │
+│  │  - Real-time Chat  │         │   - /api/auth       │     │
+│  └────────────────────┘         └─────────────────────┘     │
+│                                                               │
+└───────────────────────┬──────────────────────────────────────┘
+                        │
+                        ▼
+            ┌───────────────────────┐
+            │      Supabase         │
+            │  ┌─────────────────┐  │
+            │  │   PostgreSQL    │  │
+            │  │   (Database)    │  │
+            │  └─────────────────┘  │
+            │  ┌─────────────────┐  │
+            │  │   Auth System   │  │
+            │  │  (BetterAuth)   │  │
+            │  └─────────────────┘  │
+            │  ┌─────────────────┐  │
+            │  │    Storage      │  │
+            │  │ (Files/Images)  │  │
+            │  └─────────────────┘  │
+            │  ┌─────────────────┐  │
+            │  │   Realtime      │  │
+            │  │ (Subscriptions) │  │
+            │  └─────────────────┘  │
+            └───────────────────────┘
+                        │
+                        ▼
+                  ┌───────────┐
+                  │  Mobile   │
+                  │  API      │
+                  │ (Future)  │
+                  └───────────┘
 ```
 
-### Key Capabilities
+### Key Features
 
-1. **Authentication & Authorization**
-    - User authentication (email/password + social OAuth)
-    - Super admin access controls
-    - Role-based permissions
-    - Session management
+1. **Community Features**
+    - Reddit-style posts, upvotes, and threaded comments
+    - Facebook-like profiles, connections, and activity feeds
+    - Communities (subreddits) with custom rules and moderators
+    - Real-time notifications and messaging
 
-2. **Data Management**
-    - Type-safe database operations
-    - Real-time data sync
-    - Transaction support
-    - Data validation
+2. **Healthcare Integration**
+    - AI-powered content recommendations
+    - Healthcare-specific communities
+    - Privacy-first data handling
+    - HIPAA compliance ready
 
-3. **Background Processing**
-    - Job queues for async tasks
-    - Scheduled jobs
-    - Notification delivery
-    - Callback handling
+3. **Authentication & Authorization**
+    - Email/password + social OAuth (Google, GitHub, etc.)
+    - Role-based access control (RBAC)
+    - Row-level security (RLS) policies
+    - Session management with BetterAuth
 
-4. **Mobile API Layer**
-    - RESTful endpoints for Flutter
-    - Synchronous authentication
-    - Optimized data payloads
-    - Offline support ready
+4. **Real-Time Features**
+    - Live post updates
+    - Instant notifications
+    - Real-time chat/messaging
+    - Activity feeds
 
 ---
 
@@ -103,28 +126,13 @@ We believe healthcare technology should:
 | [TypeScript](https://www.typescriptlang.org/) | 5.8.3 | Type-safe development |
 | [Node.js](https://nodejs.org/) | ≥20.0.0 | JavaScript runtime |
 
-### Authentication & Security
+### Backend & Database
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| [Better Auth](https://www.better-auth.com/) | 1.3.34 | Modern authentication |
-| [Drizzle ORM](https://orm.drizzle.team/) | 0.44.7 | Type-safe database ORM |
-| [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) | 0.31.6 | Database migrations |
-| [PostgreSQL](https://www.postgresql.org/) | Latest | Primary database |
+| [Supabase](https://supabase.com/) | Latest | Backend-as-a-Service (BaaS) |
+| [PostgreSQL](https://www.postgresql.org/) | 15+ | Database (via Supabase) |
+| [Better Auth](https://www.better-auth.com/) | 1.3.34 | Authentication layer |
 | [Zod](https://zod.dev/) | 3.24.4 | Runtime validation |
-
-### Background Processing
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| [BullMQ](https://docs.bullmq.io/) | 5.63.0 | Job queue management |
-| [IORedis](https://github.com/luin/ioredis) | 5.8.2 | Redis client |
-| [Redis](https://redis.io/) | Latest | Caching & queues |
-
-### API & Type Safety
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| [tRPC](https://trpc.io/) | 11.7.1 | Type-safe APIs |
-| [React Hook Form](https://react-hook-form.com/) | 7.65.0 | Form handling |
-| [@hookform/resolvers](https://github.com/react-hook-form/resolvers) | 5.2.2 | Form validation |
 
 ### UI Components
 | Technology | Version | Purpose |
@@ -135,14 +143,6 @@ We believe healthcare technology should:
 | [Lucide React](https://lucide.dev/) | 0.552.0 | Icon library |
 | [next-themes](https://github.com/pacocoursey/next-themes) | 0.4.6 | Theme management |
 
-### Data Visualization
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| [Recharts](https://recharts.org/) | 2.15.4 | Charts & graphs |
-| [React Day Picker](https://react-day-picker.js.org/) | 9.11.1 | Date picker |
-| [Embla Carousel](https://www.embla-carousel.com/) | 8.6.0 | Carousel component |
-| [React Resizable Panels](https://github.com/bvaughn/react-resizable-panels) | 3.0.6 | Resizable layouts |
-
 ### Development Tools
 | Technology | Version | Purpose |
 |------------|---------|---------|
@@ -150,27 +150,6 @@ We believe healthcare technology should:
 | [Prettier](https://prettier.io/) | 3.0.3 | Code formatting |
 | [Vitest](https://vitest.dev/) | 3.2.4 | Unit testing |
 | [Playwright](https://playwright.dev/) | 1.52.0 | E2E testing |
-| [Storybook](https://storybook.js.org/) | 8.6.12 | Component dev |
-
-### Observability & Analytics
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| [OpenTelemetry](https://opentelemetry.io/) | Various | Distributed tracing |
-| [Vercel OTel](https://vercel.com/docs/observability) | 1.12.0 | Performance monitoring |
-| [PostHog Node](https://posthog.com/) | 5.11.0 | Analytics & feature flags |
-
-### Additional Libraries
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| [date-fns](https://date-fns.org/) | 4.1.0 | Date utilities |
-| [lodash](https://lodash.com/) | 4.17.21 | Utility functions |
-| [clsx](https://github.com/lukeed/clsx) | 2.1.1 | Class name utility |
-| [tailwind-merge](https://github.com/dcastil/tailwind-merge) | 2.6.0 | Tailwind class merging |
-| [class-variance-authority](http://cva.style/) | 0.7.1 | Component variants |
-| [cmdk](https://cmdk.paco.me/) | 1.1.1 | Command menu |
-| [sonner](https://sonner.emilkowal.ski/) | 2.0.7 | Toast notifications |
-| [vaul](https://vaul.emilkowal.ski/) | 1.1.2 | Drawer component |
-| [input-otp](https://input-otp.rodz.dev/) | 1.4.2 | OTP input |
 
 ---
 
@@ -185,16 +164,16 @@ Ensure you have the following installed:
   ```bash
   npm install -g pnpm@10.0.0
   ```
-- **Docker** (for local database) ([Download](https://www.docker.com/))
 - **Git** ([Download](https://git-scm.com/))
+- **Supabase Account** ([Sign up](https://supabase.com/))
 
-### Local Development Setup
+### Initial Setup
 
 #### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
-cd ten-xr-mobile-backend
+cd 10xr-community-platform
 ```
 
 #### 2. Install Dependencies
@@ -203,52 +182,55 @@ cd ten-xr-mobile-backend
 pnpm install
 ```
 
-This will install all required packages as defined in `package.json`.
+#### 3. Set Up Supabase
 
-#### 3. Start Infrastructure Services
+1. Create a new project at [Supabase Dashboard](https://supabase.com/dashboard)
+2. Copy your project's API keys from Settings → API
+3. Note your project URL and anon/public key
 
-For local development, start PostgreSQL and Redis using Docker:
+#### 4. Configure Environment Variables
 
-```bash
-# Create docker-compose.yml or use existing infrastructure
-docker-compose up -d postgres redis
-```
-
-**Note**: In production, environment variables are injected by infrastructure (Kubernetes, AWS, etc.), so no `.env` files are needed.
-
-#### 4. Configure Environment (Local Development Only)
-
-For local development, create a `.env.local` file:
+Create a `.env.local` file in the root directory:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/tenxr_db
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Better Auth
-BETTER_AUTH_SECRET=your-local-secret-here
+# Better Auth Configuration
+BETTER_AUTH_SECRET=your-secret-key-here
 BETTER_AUTH_URL=http://localhost:3000
 
-# Application
+# Application Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
+
+# Optional: OAuth Providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
 ```
 
-#### 5. Database Setup
+**Generate a secure secret for BETTER_AUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+#### 5. Initialize Database Schema
+
+Run the database migrations in Supabase:
 
 ```bash
-# Generate database schema
-pnpm db:generate
-
-# Run migrations
-pnpm db:migrate
-
-# Generate Better Auth tables
-pnpm auth:generate
-pnpm db:migrate
+# This will create all necessary tables and policies
+pnpm db:setup
 ```
+
+Alternatively, you can apply the SQL schema manually:
+1. Go to your Supabase Dashboard → SQL Editor
+2. Copy and paste the contents of `supabase/schema.sql`
+3. Run the query
 
 #### 6. Start Development Server
 
@@ -261,50 +243,67 @@ The application will be available at: **http://localhost:3000**
 ### Verify Installation
 
 - **Homepage**: http://localhost:3000
-- **Health Check**: http://localhost:3000/api/health
-- **Database Studio**: `pnpm db:studio` → http://localhost:4983
+- **Auth**: Try signing up/logging in
+- **API Health**: http://localhost:3000/api/health
 
 ---
 
 ## 📁 Project Structure
 
 ```
-ten-xr-mobile-backend/
+10xr-community-platform/
 ├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Authentication routes
+│   │   ├── login/
+│   │   ├── signup/
+│   │   └── layout.tsx
+│   ├── (dashboard)/              # Main app routes
+│   │   ├── feed/                # Home feed
+│   │   ├── communities/         # Community pages
+│   │   ├── profile/             # User profiles
+│   │   └── layout.tsx
 │   ├── api/                      # API routes
-│   │   ├── auth/                # Authentication endpoints
-│   │   ├── health/              # Health check
-│   │   └── [features]/          # Feature-specific APIs
-│   ├── (dashboard)/             # Admin dashboard routes
-│   └── layout.tsx               # Root layout
+│   │   ├── auth/[...all]/       # BetterAuth handler
+│   │   ├── posts/               # Posts API
+│   │   ├── comments/            # Comments API
+│   │   ├── communities/         # Communities API
+│   │   └── health/              # Health check
+│   ├── layout.tsx               # Root layout
+│   └── page.tsx                 # Landing page
 │
 ├── components/                   # React components
 │   ├── ui/                      # shadcn/ui components
-│   ├── forms/                   # Form components
-│   └── [feature-components]/   # Feature-specific components
+│   ├── feed/                    # Feed components
+│   ├── posts/                   # Post components
+│   ├── communities/             # Community components
+│   └── layout/                  # Layout components
 │
 ├── lib/                         # Core libraries
 │   ├── auth/                    # Authentication
-│   │   ├── auth.ts             # Better Auth server config
+│   │   ├── better-auth.ts      # BetterAuth config
 │   │   └── auth-client.ts      # Client-side auth
-│   ├── db/                      # Database
-│   │   ├── schema.ts           # Drizzle schema
-│   │   └── index.ts            # DB connection
-│   ├── queues/                  # Background jobs
-│   ├── services/                # Business logic
+│   ├── supabase/                # Supabase setup
+│   │   ├── client.ts           # Client instance
+│   │   ├── server.ts           # Server instance
+│   │   └── types.ts            # Database types
+│   ├── actions/                 # Server actions
+│   ├── hooks/                   # React hooks
 │   └── utils/                   # Utility functions
 │
+├── supabase/                    # Supabase configuration
+│   ├── schema.sql              # Database schema
+│   ├── migrations/             # Database migrations
+│   └── seed.sql                # Seed data (optional)
+│
 ├── public/                      # Static assets
-├── scripts/                     # Build & deployment scripts
-│   └── entrypoint.sh           # Docker entrypoint
+│   ├── logos/                  # Brand logos
+│   └── icons/                  # Brand icons
 │
-├── drizzle/                     # Database migrations (generated)
-├── .storybook/                  # Storybook configuration
-├── e2e/                         # Playwright E2E tests
+├── styles/                      # Global styles
+│   └── tailwind.css            # Tailwind configuration
 │
-├── Dockerfile                   # Production Docker image
-├── docker-compose.yml           # Local development services
-├── drizzle.config.ts           # Drizzle ORM configuration
+├── .env.local                   # Environment variables (local)
+├── .env.example                 # Environment template
 ├── next.config.ts              # Next.js configuration
 ├── package.json                # Dependencies & scripts
 ├── tsconfig.json               # TypeScript configuration
@@ -341,20 +340,14 @@ pnpm format
 ### Database Operations
 
 ```bash
-# Generate migration files from schema changes
-pnpm db:generate
+# Set up database schema (first time)
+pnpm db:setup
 
-# Apply migrations to database
-pnpm db:migrate
+# Generate TypeScript types from Supabase
+pnpm db:types
 
-# Push schema directly (dev only - skips migrations)
-pnpm db:push
-
-# Open Drizzle Studio (database GUI)
-pnpm db:studio
-
-# Generate Better Auth database schema
-pnpm auth:generate
+# Reset database (WARNING: destructive)
+pnpm db:reset
 ```
 
 ### Testing
@@ -372,24 +365,11 @@ pnpm test:ui
 # Generate coverage report
 pnpm test:coverage
 
-# Run E2E tests (Playwright) - headless
+# Run E2E tests (Playwright)
 pnpm e2e:headless
 
 # Run E2E tests with UI
 pnpm e2e:ui
-```
-
-### Storybook (Component Development)
-
-```bash
-# Start Storybook development server
-pnpm storybook
-
-# Build Storybook for production
-pnpm build-storybook
-
-# Test Storybook components
-pnpm test-storybook
 ```
 
 ### Production
@@ -403,228 +383,213 @@ pnpm start
 
 # Analyze bundle size
 pnpm analyze
-
-# Generate component coupling graph
-pnpm coupling-graph
-```
-
-### Maintenance
-
-```bash
-# Apply patches to dependencies
-pnpm postinstall
 ```
 
 ---
 
-## 🐳 Docker Deployment
+## 🗄 Database Schema
 
-### Building the Production Image
+### Core Tables
 
-The application uses a multi-stage Docker build optimized for production:
+#### Users
+- `id` (uuid, primary key)
+- `email` (text, unique)
+- `username` (text, unique)
+- `display_name` (text)
+- `avatar_url` (text)
+- `bio` (text)
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
 
-```bash
-# Build the Docker image
-docker build -t 10xr-backend:latest .
+#### Communities
+- `id` (uuid, primary key)
+- `name` (text, unique)
+- `slug` (text, unique)
+- `description` (text)
+- `icon_url` (text)
+- `banner_url` (text)
+- `rules` (jsonb)
+- `member_count` (integer)
+- `created_by` (uuid, foreign key → users)
+- `created_at` (timestamp)
 
-# Build with specific tag
-docker build -t 10xr-backend:v1.0.0 .
-```
+#### Posts
+- `id` (uuid, primary key)
+- `title` (text)
+- `content` (text)
+- `content_type` (enum: text, image, link, poll)
+- `author_id` (uuid, foreign key → users)
+- `community_id` (uuid, foreign key → communities)
+- `upvotes` (integer)
+- `downvotes` (integer)
+- `comment_count` (integer)
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
 
-### Running the Container
+#### Comments
+- `id` (uuid, primary key)
+- `content` (text)
+- `author_id` (uuid, foreign key → users)
+- `post_id` (uuid, foreign key → posts)
+- `parent_id` (uuid, foreign key → comments, nullable)
+- `upvotes` (integer)
+- `downvotes` (integer)
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
 
-**Environment variables are injected by infrastructure** (Kubernetes, AWS ECS, etc.):
+#### Votes
+- `id` (uuid, primary key)
+- `user_id` (uuid, foreign key → users)
+- `votable_id` (uuid)
+- `votable_type` (enum: post, comment)
+- `vote_type` (enum: upvote, downvote)
+- `created_at` (timestamp)
 
-```bash
-# Run container with environment variables from infrastructure
-docker run -p 3000:3000 \
-  -e DATABASE_URL=$DATABASE_URL \
-  -e REDIS_URL=$REDIS_URL \
-  -e BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
-  -e BETTER_AUTH_URL=$BETTER_AUTH_URL \
-  10xr-backend:latest
-```
+#### Memberships
+- `user_id` (uuid, foreign key → users)
+- `community_id` (uuid, foreign key → communities)
+- `role` (enum: member, moderator, admin)
+- `joined_at` (timestamp)
+- Primary key: (user_id, community_id)
 
-### Docker Image Details
+### Row Level Security (RLS) Policies
 
-The Dockerfile includes:
+All tables have RLS enabled with policies for:
+- **Public read access** for posts, comments, and communities
+- **Authenticated write access** for creating content
+- **Owner-only updates** for editing/deleting own content
+- **Moderator access** for community management
 
-- **Base**: Node.js 22 slim (Debian-based)
-- **Build Tools**: Python, LibreOffice, ImageMagick, GraphicsMagick
-- **Document Processing**: poppler-utils, ghostscript, tesseract
-- **Fonts**: DejaVu, Liberation fonts for document rendering
-- **Security**: Runs as non-root user (`nextjs:nodejs`)
-- **Health Check**: Built-in health check endpoint
-- **Optimizations**: Multi-stage build, layer caching
+---
 
-### Health Check
+## 🔐 Authentication Flow
 
-The application exposes a health endpoint:
+### BetterAuth + Supabase Integration
 
-```bash
-curl http://localhost:3000/api/health
+BetterAuth handles authentication logic while Supabase manages sessions and user data:
 
-# Expected response:
-{
-  "status": "ok",
-  "timestamp": "2024-11-01T12:00:00.000Z"
-}
-```
+1. **Sign Up**
+   ```typescript
+   import { authClient } from "@/lib/auth/auth-client";
+   
+   await authClient.signUp.email({
+     email: "user@example.com",
+     password: "secure-password",
+     name: "John Doe",
+   });
+   ```
 
-Docker will automatically monitor this endpoint as configured in the `HEALTHCHECK` directive.
+2. **Sign In**
+   ```typescript
+   await authClient.signIn.email({
+     email: "user@example.com",
+     password: "secure-password",
+   });
+   ```
+
+3. **Social OAuth**
+   ```typescript
+   await authClient.signIn.social({
+     provider: "google",
+     callbackURL: "/dashboard",
+   });
+   ```
+
+4. **Get Session**
+   ```typescript
+   // Client-side (React hook)
+   const { data: session } = authClient.useSession();
+   
+   // Server-side
+   import { auth } from "@/lib/auth/better-auth";
+   const session = await auth.api.getSession({ headers: request.headers });
+   ```
+
+5. **Sign Out**
+   ```typescript
+   await authClient.signOut();
+   ```
 
 ---
 
 ## 🚢 Deployment
 
-### Infrastructure Requirements
+### Deploy to Vercel
 
-- **Container Orchestration**: Kubernetes, AWS ECS, or Docker Swarm
-- **Database**: PostgreSQL 14+ (managed service recommended)
-- **Cache/Queue**: Redis 6+ (managed service recommended)
-- **File Storage**: Object storage (S3, Azure Blob, GCS)
-- **Load Balancer**: ALB, Nginx, or similar
-- **SSL/TLS**: Certificate management (Let's Encrypt, ACM)
+The easiest way to deploy this application is with Vercel:
 
-### Environment Variables (Injected by Infrastructure)
+1. **Push to GitHub/GitLab**
+   ```bash
+   git remote add origin <your-repo-url>
+   git push -u origin main
+   ```
 
-Required environment variables for production:
+2. **Connect to Vercel**
+    - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+    - Click "Add New Project"
+    - Import your Git repository
 
-```bash
-# Core Application
-NODE_ENV=production
-PORT=3000
-HOSTNAME=0.0.0.0
+3. **Configure Environment Variables**
+    - Add all variables from `.env.local` to Vercel
+    - Ensure `BETTER_AUTH_URL` matches your production domain
 
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/database
+4. **Deploy**
+    - Vercel will automatically build and deploy
+    - Each push to main triggers a new deployment
 
-# Redis
-REDIS_URL=redis://host:6379
+### Environment Variables for Production
 
-# Authentication
-BETTER_AUTH_SECRET=<secure-secret-key>
+```env
+# Supabase (from your production project)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-production-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-production-service-role-key
+
+# Better Auth (use your production domain)
+BETTER_AUTH_SECRET=your-production-secret-key
 BETTER_AUTH_URL=https://your-domain.com
 
-# Application URL
+# Application
 NEXT_PUBLIC_APP_URL=https://your-domain.com
+NODE_ENV=production
 
-# Optional: Resource Limits
-NODE_OPTIONS=--max-old-space-size=4096
-
-# Optional: Timezone
-TZ=UTC
-LANG=en_US.UTF-8
+# OAuth (production credentials)
+GOOGLE_CLIENT_ID=production-google-client-id
+GOOGLE_CLIENT_SECRET=production-google-client-secret
 ```
 
-### Deployment Steps
-
-1. **Build Docker Image**
-   ```bash
-   docker build -t 10xr-backend:v1.0.0 .
-   ```
-
-2. **Push to Container Registry**
-   ```bash
-   docker tag 10xr-backend:v1.0.0 your-registry/10xr-backend:v1.0.0
-   docker push your-registry/10xr-backend:v1.0.0
-   ```
-
-3. **Deploy to Infrastructure**
-    - Update Kubernetes deployment manifest
-    - Apply configuration with `kubectl apply`
-    - Or use CI/CD pipeline (GitHub Actions, GitLab CI, etc.)
-
-4. **Run Database Migrations**
-   ```bash
-   # Run migrations as init container or manual job
-   kubectl exec -it <pod-name> -- pnpm db:migrate
-   ```
-
-5. **Verify Deployment**
-   ```bash
-   curl https://your-domain.com/api/health
-   ```
-
-### Scaling Considerations
-
-- **Horizontal Scaling**: Run multiple container instances behind load balancer
-- **Database**: Use connection pooling (configured in Drizzle)
-- **Redis**: Consider Redis Cluster for high availability
-- **Session Storage**: Redis-backed sessions work across instances
-- **File Uploads**: Use shared object storage (S3/Azure Blob)
-
 ---
 
-## 🔐 Security Features
+## 🔮 Roadmap
 
-### Built-in Security
+### Phase 1: Core Platform (Current)
+- [x] Supabase setup and schema
+- [x] BetterAuth integration
+- [x] Basic post creation and viewing
+- [x] Community creation
+- [ ] Upvoting/downvoting system
+- [ ] Threaded comments
+- [ ] User profiles
 
-- **Non-root Container**: Application runs as `nextjs` user (UID 1001)
-- **Input Validation**: Zod schemas for all inputs
-- **SQL Injection Protection**: Drizzle ORM with parameterized queries
-- **XSS Protection**: React's built-in escaping
-- **CSRF Protection**: Better Auth session management
-- **Rate Limiting**: Configurable via middleware
-- **Secure Headers**: Security headers configured in Next.js
-- **Audit Logging**: Track all authentication events
+### Phase 2: Enhanced Features
+- [ ] Real-time notifications
+- [ ] Direct messaging
+- [ ] Image uploads
+- [ ] Rich text editor
+- [ ] Search functionality
+- [ ] User reputation system
 
-### HIPAA Compliance Considerations
+### Phase 3: Healthcare Features
+- [ ] Healthcare-specific communities
+- [ ] AI content moderation
+- [ ] Privacy-enhanced profiles
+- [ ] HIPAA compliance features
 
-For healthcare deployments:
-
-- Encrypt data at rest (database encryption)
-- Encrypt data in transit (TLS 1.3)
-- Implement comprehensive audit logging
-- Regular security updates
-- Access control and authentication
-- Data backup and disaster recovery
-
----
-
-## 📊 Monitoring & Observability
-
-### Built-in Monitoring
-
-- **OpenTelemetry Integration**: Distributed tracing
-- **Health Check Endpoint**: `/api/health`
-- **Performance Metrics**: Via Vercel OTel
-- **Error Tracking**: OpenTelemetry traces
-- **Analytics**: PostHog integration
-
-### Recommended Monitoring Stack
-
-- **APM**: DataDog, New Relic, or Dynatrace
-- **Logging**: ELK Stack, Loki, or CloudWatch
-- **Metrics**: Prometheus + Grafana
-- **Alerting**: PagerDuty, Opsgenie
-
----
-
-## 🧪 Testing
-
-### Test Coverage
-
-- **Unit Tests**: Vitest for component and utility testing
-- **Integration Tests**: API route testing
-- **E2E Tests**: Playwright for full user flows
-- **Component Tests**: Storybook for UI component testing
-
-### Running Tests
-
-```bash
-# Run all tests
-pnpm test
-
-# Run with coverage
-pnpm test:coverage
-
-# Run E2E tests
-pnpm e2e:headless
-
-# Run Storybook tests
-pnpm test-storybook
-```
+### Phase 4: Mobile API
+- [ ] Expose selected API routes
+- [ ] API documentation
+- [ ] Rate limiting
+- [ ] Mobile-specific optimizations
 
 ---
 
@@ -652,6 +617,14 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 - `test:` - Test updates
 - `chore:` - Build/tooling changes
 
+### Code Quality
+
+- Keep files under 300–500 lines
+- Add JSDoc comments to exported functions
+- Write tests for new features
+- Ensure TypeScript types are correct
+- Follow ESLint and Prettier rules
+
 ---
 
 ## 📄 License
@@ -674,11 +647,11 @@ For questions and support:
 
 Built with:
 - [Next.js](https://nextjs.org/) by Vercel
+- [Supabase](https://supabase.com/) by Supabase Inc.
 - [Better Auth](https://www.better-auth.com/) by Better Auth Team
-- [Drizzle ORM](https://orm.drizzle.team/) by Drizzle Team
 - [shadcn/ui](https://ui.shadcn.com/) by shadcn
 - Based on [next-enterprise](https://github.com/Blazity/next-enterprise) by Blazity
 
 ---
 
-**10xR** - Transforming Healthcare Through Technology 🏥
+**10xR** - Building the Future of Healthcare Communities 🏥🤝
