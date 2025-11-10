@@ -656,7 +656,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## 📄 License
 
-Proprietary - © 2025 10xR. All rights reserved.
+Proprietary - © 2024 10xR. All rights reserved.
 
 ---
 
