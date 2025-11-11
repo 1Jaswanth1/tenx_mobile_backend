@@ -1,1058 +1,1087 @@
-# 10xR Community Platform - Complete Development Guide
+# 10xR Community Platform - Supabase Integration Guide
 
-**Version:** 2.1  
+**Version:** 3.0  
 **Last Updated:** November 2025  
-**Status:** Production Ready with Declarative Schemas
+**Supabase Version:** v2 (Declarative Schema)
+
+Technical documentation for how we use Supabase in the 10xR Community Platform.
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Initial Setup](#initial-setup)
-3. [Database Architecture](#database-architecture)
-4. [Supabase Client Integration](#supabase-client-integration)
-5. [Local Development Workflow](#local-development-workflow)
-6. [Database Schema Management](#database-schema-management)
-7. [Domain Entities & Usage](#domain-entities--usage)
-8. [Testing](#testing)
-9. [Type Generation](#type-generation)
-10. [Troubleshooting](#troubleshooting)
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Declarative Schema Management](#declarative-schema-management)
+4. [Database Configuration](#database-configuration)
+5. [RLS Policies](#rls-policies)
+6. [Storage](#storage)
+7. [Realtime](#realtime)
+8. [Edge Functions](#edge-functions)
+9. [Client Integration](#client-integration)
+10. [Performance Optimization](#performance-optimization)
+11. [Security Best Practices](#security-best-practices)
 
 ---
 
-## 🚀 Prerequisites
+## Overview
 
-### Required Software
+### Why Supabase?
 
-1. **Node.js** (v18+ recommended)
-   ```bash
-   node --version  # Should be v18.0.0 or higher
-   ```
+We chose Supabase for the 10xR Community Platform because:
 
-2. **Supabase CLI**
-   ```bash
-   # Install via npm
-   npm install -g supabase
-   
-   # Or via Homebrew (macOS)
-   brew install supabase/tap/supabase
-   
-   # Verify installation
-   supabase --version
-   ```
+1. **Postgres Foundation:**
+    - Industry-standard relational database
+    - ACID compliance for data integrity
+    - Rich SQL feature set (triggers, functions, views)
+    - Mature ecosystem and tooling
 
-3. **Docker Desktop**
-    - Download from: https://www.docker.com/products/docker-desktop
-    - Docker is required for running Supabase locally
-    - Ensure Docker is running before starting Supabase
+2. **Built-in Features:**
+    - Row-Level Security (RLS) for data access control
+    - Realtime subscriptions for live updates
+    - Storage API for media files
+    - Auto-generated REST API
+    - Auto-generated TypeScript types
+
+3. **Developer Experience:**
+    - Local development with Docker
+    - **Declarative Schema Management** (v2 feature)
+    - CLI for migrations and deployment
+    - Studio for visual database management
+    - Excellent documentation
+
+4. **Scalability:**
+    - Connection pooling (PgBouncer)
+    - Read replicas (production)
+    - Automatic backups
+    - CDN for static assets
+
+5. **Cost-Effective:**
+    - Free tier: 500MB database, 2 simultaneous connections
+    - Pro tier: $25/month for production needs
+    - Predictable pricing as we scale
 
 ---
 
-## 🎯 Initial Setup
+## Architecture
 
-### Step 1: Clone the Repository
-
-```bash
-git clone <your-repo-url>
-cd 10xr-community-platform
-```
-
-### Step 2: Initialize Supabase
-
-```bash
-# Initialize Supabase in the project
-supabase init
-```
-
-This command creates the `supabase` directory structure if it doesn't exist.
-
-### Step 3: Review Project Structure
-
-Your project should now have this structure:
+### Supabase Stack
 
 ```
-10xr-community-platform/
-├── lib/
-│   └── supabase/           # Supabase client integration
-│       ├── types.ts        # Auto-generated database types
-│       ├── client.ts       # Browser client with domain entities
-│       └── server.ts       # Server client with repositories
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT APPLICATION                         │
+│                   (Next.js 16 App Router)                    │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+           ┌────────────┴────────────┐
+           │                         │
+           ▼                         ▼
+┌──────────────────────┐  ┌──────────────────────┐
+│   Supabase Client    │  │   Better Auth        │
+│   (@supabase/ssr)    │  │   (Authentication)   │
+└──────────┬───────────┘  └──────────┬───────────┘
+           │                         │
+           └────────────┬────────────┘
+                        │
+           ┌────────────▼────────────┐
+           │   Supabase API Layer    │
+           ├─────────────────────────┤
+           │  PostgREST (REST API)   │
+           │  Realtime (WebSockets)  │
+           │  Storage (S3-like)      │
+           │  Edge Functions         │
+           └────────────┬────────────┘
+                        │
+           ┌────────────▼────────────┐
+           │   PostgreSQL Database   │
+           ├─────────────────────────┤
+           │  • Declarative Schema   │
+           │  • RLS Policies         │
+           │  • Triggers & Functions │
+           │  • Full-text Search     │
+           └─────────────────────────┘
+```
+
+### Data Flow
+
+**User Action → Database:**
+```
+User clicks "Create Post"
+  ↓
+Next.js Server Action
+  ↓
+Supabase Client (with user session)
+  ↓
+PostgREST API (auto-generated from schema)
+  ↓
+RLS Policy Check (is user authenticated?)
+  ↓
+Trigger: update_updated_at_column()
+  ↓
+Trigger: update_community_post_count()
+  ↓
+Database Write
+  ↓
+Return Result
+```
+
+**Real-time Update:**
+```
+Database Write (post created)
+  ↓
+Realtime Server detects change
+  ↓
+Broadcast to subscribed clients
+  ↓
+Client updates UI (new post appears)
+```
+
+---
+
+## Declarative Schema Management
+
+### What is Declarative Schema?
+
+**Traditional Imperative Migrations:**
+```sql
+-- Migration 001
+CREATE TABLE posts (id UUID PRIMARY KEY);
+
+-- Migration 002
+ALTER TABLE posts ADD COLUMN title TEXT;
+
+-- Migration 003
+ALTER TABLE posts ADD COLUMN content TEXT;
+```
+**Problem:** Schema scattered across 100+ files
+
+**Declarative Approach:**
+```sql
+-- supabase/schemas/content.sql (single source of truth)
+CREATE TABLE posts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  content TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+**Benefit:** Complete table definition in one file
+
+### Our Schema Organization
+
+```
+supabase/
+├── schemas/                    # SOURCE OF TRUTH
+│   ├── types.sql              # ENUMs and custom types
+│   ├── auth.sql               # Better Auth tables
+│   ├── community_core.sql     # users, communities, memberships
+│   ├── content.sql            # posts, comments, votes
+│   ├── engagement.sql         # saved_posts, follows, notifications
+│   ├── messaging.sql          # direct_conversations, direct_messages
+│   ├── b2b_sales.sql          # agencies, aide_profiles, leads
+│   ├── analytics.sql          # user_activity_log, daily_stats
+│   └── functions.sql          # Triggers and stored procedures
 │
-├── supabase/
-│   ├── config.toml         # Supabase configuration
-│   ├── seed.sql            # Seed data for local dev
-│   ├── migrations/         # Generated migration files (auto-created)
-│   └── schemas/            # Declarative schema files
-│       ├── auth.sql        # Better Auth tables
-│       ├── types.sql       # Custom ENUM types
-│       ├── community_core.sql  # Users, communities, memberships
-│       ├── content.sql         # Posts, comments, votes
-│       ├── engagement.sql      # Saved posts, follows, notifications
-│       ├── messaging.sql       # Direct messages
-│       ├── b2b_sales.sql       # Agencies, aide profiles
-│       ├── analytics.sql       # Activity logs, stats
-│       └── functions.sql       # Triggers and functions
+├── migrations/                 # AUTO-GENERATED (don't edit manually)
+│   ├── 20241101000000_initial_schema.sql
+│   ├── 20241105120000_add_post_tags.sql
+│   └── ... (timestamped)
 │
-├── app/
-│   └── actions/            # Server actions using domain repositories
-│
-└── docs/
-    ├── LOCAL_SETUP.md      # This file
-    └── SCHEMA_GUIDE.md     # Schema documentation
+├── seed.sql                   # Test data for local development
+└── config.toml                # Supabase configuration
 ```
 
-### Step 4: Start Supabase Locally
+### Schema Loading Order
+
+Declared in `supabase/config.toml`:
+
+```toml
+[db.migrations]
+enabled = true
+schema_paths = [
+  "./schemas/types.sql",          # 1. Types first
+  "./schemas/auth.sql",            # 2. Auth layer
+  "./schemas/community_core.sql",  # 3. Core tables
+  "./schemas/content.sql",         # 4. Content tables
+  "./schemas/engagement.sql",      # 5. Engagement
+  "./schemas/messaging.sql",       # 6. Messaging
+  "./schemas/b2b_sales.sql",       # 7. B2B CRM
+  "./schemas/analytics.sql",       # 8. Analytics
+  "./schemas/functions.sql",       # 9. Functions last
+]
+```
+
+**Why this order?**
+- ENUMs must exist before being referenced
+- Foreign keys require parent tables to exist first
+- Triggers/functions reference tables, so come last
+
+### Workflow: Making Schema Changes
+
+#### 1. Edit Schema File
 
 ```bash
-# Start all Supabase services (Postgres, Studio, Auth, etc.)
-supabase start
+vim supabase/schemas/content.sql
+
+# Add new column:
+posts.slug TEXT
 ```
 
-This command will:
-- Start Docker containers for Postgres, Studio, GoTrue (Auth), etc.
-- Run all schema files in the order defined in `config.toml`
-- Apply seed data from `seed.sql`
-
-**Expected Output:**
-```
-Started supabase local development setup.
-
-         API URL: http://localhost:54321
-     GraphQL URL: http://localhost:54321/graphql/v1
-          DB URL: postgresql://postgres:postgres@localhost:54322/postgres
-      Studio URL: http://localhost:54323
-    Inbucket URL: http://localhost:54324
-      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
-        anon key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-service_role key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Save these keys!** You'll need them for your frontend application.
-
-### Step 5: Verify the Setup
-
-1. **Open Supabase Studio**
-   ```bash
-   # Open in browser
-   open http://localhost:54323
-   ```
-
-2. **Check Tables Created**
-    - Navigate to "Table Editor" in Studio
-    - You should see:
-        - `auth_users`, `auth_sessions`, `auth_accounts` (Better Auth)
-        - `users`, `communities`, `posts`, `comments` (Community)
-        - `agencies`, `aide_profiles` (B2B Sales)
-        - All 30+ tables from the schema
-
-3. **Check Seed Data**
-   ```sql
-   -- Run in SQL Editor
-   SELECT * FROM users;
-   SELECT * FROM communities;
-   SELECT * FROM posts;
-   ```
-
-   You should see:
-    - System user + 3 test users
-    - 5 default communities
-    - 4 sample posts
-
-### Step 6: Generate TypeScript Types
+#### 2. Generate Migration
 
 ```bash
-# Add to package.json scripts
-"db:types": "supabase gen types typescript --local > lib/supabase/types.ts"
+supabase db diff -f add_post_slug
 
-# Generate types
-npm run db:types
+# Output:
+# Created new migration at supabase/migrations/20241107120000_add_post_slug.sql
 ```
 
-This creates `lib/supabase/types.ts` with full type definitions for your database.
-
-### Step 7: Configure Environment Variables
-
-Create a `.env.local` file in your project root:
+#### 3. Review Generated Migration
 
 ```bash
-# .env.local
+cat supabase/migrations/20241107120000_add_post_slug.sql
 
-# Supabase (Local Development)
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-step-4>
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-step-4>
-
-# Database URL (for Better Auth)
-DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
-
-# Better Auth
-BETTER_AUTH_SECRET=your-local-secret-key-here
-BETTER_AUTH_URL=http://localhost:3000/api/auth
-
-# App Settings
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
+# Expected content:
+ALTER TABLE "public"."posts" ADD COLUMN "slug" TEXT;
 ```
 
----
-
-## 🏗️ Database Architecture
-
-### The Three-Layer System
-
-Our architecture uses a **decoupled identity system** with three distinct layers:
-
-```
-┌─────────────────────────────────────────┐
-│   Layer 1: Better Auth (Security)       │
-│   ├── auth_users (UUID primary key)     │
-│   ├── auth_sessions                     │
-│   ├── auth_accounts (OAuth)             │
-│   ├── auth_verification_tokens          │
-│   └── auth_two_factor                   │
-└─────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────┐
-│   Layer 2: Community (The "Bait")       │
-│   ├── users (anonymous identity)        │
-│   ├── communities (subreddits)          │
-│   ├── posts (is_anonymous flag)         │
-│   ├── comments (nested threading)       │
-│   ├── votes (engagement)                │
-│   ├── memberships (flair_text)          │
-│   ├── notifications                     │
-│   ├── direct_messages (DMs)             │
-│   └── saved_posts, follows, reports     │
-└─────────────────────────────────────────┘
-              ↓
-    [THE BRIDGE: aide_profiles]
-              ↓
-┌─────────────────────────────────────────┐
-│   Layer 3: B2B Sales (The "Payload")    │
-│   ├── agencies (CRM target list)        │
-│   ├── aide_profiles (user → agency)     │
-│   ├── agency_leads (inbound funnel)     │
-│   ├── evangelist_rewards ($1K)          │
-│   └── sales_activities (CRM log)        │
-└─────────────────────────────────────────┘
-```
-
-### Key Strategic Features
-
-| Feature | Database Implementation | Business Impact |
-|---------|-------------------------|-----------------|
-| **Catharsis Engine** | `posts.is_anonymous = TRUE` | Drive acquisition from Facebook |
-| **Data Engine** | `memberships.flair_text` | Collect role data voluntarily |
-| **Sales Engine** | `direct_messages` | Activate evangelists privately |
-| **Data Bomb** | `aide_profiles` bridge | "94 of your staff are here" |
-
----
-
-## 🔌 Supabase Client Integration
-
-### Architecture: Domain-Driven Design
-
-Instead of generic database operations, we use **domain-specific entities**:
-
-```typescript
-// ❌ Old way (generic)
-const { data } = await supabase.from('users').select('*');
-
-// ✅ New way (domain-driven)
-const users = await db.users.getMany();
-const user = await db.users.getOne(userId);
-```
-
-### Client Types
-
-| Client | Use For | Import From |
-|--------|---------|-------------|
-| **Browser Client** | React components, client-side | `lib/supabase/client.ts` |
-| **Server Client** | Server components, API routes | `lib/supabase/server.ts` |
-| **Service Role** | Admin operations (bypasses RLS) | `createServiceRoleClient()` |
-
-### Setup Domain Clients
-
-The client integration files (`lib/supabase/client.ts` and `lib/supabase/server.ts`) provide:
-
-1. **Type-Safe Operations** - Full TypeScript support
-2. **Clean API** - Organized methods per domain
-3. **RLS Compliance** - Respects Row Level Security
-4. **Real-time Support** - Built-in subscriptions
-
----
-
-## 🔄 Local Development Workflow
-
-### Daily Workflow
+#### 4. Apply Locally
 
 ```bash
-# 1. Start Supabase (if not already running)
-supabase start
+supabase migration up
 
-# 2. Start your Next.js dev server
-npm run dev
-
-# 3. Work on your code...
-
-# 4. When done for the day
-supabase stop
-```
-
-### Quick Commands Reference
-
-```bash
-# Start/Stop
-supabase start          # Start local Supabase
-supabase stop           # Stop local Supabase
-supabase stop --backup  # Stop and backup data
-
-# Schema Management
-supabase db diff -f <name>    # Generate migration from schema changes
-supabase migration up         # Apply pending migrations
-supabase migration list       # List all migrations
-supabase db reset             # Reset DB and apply all migrations + seed
-
-# Type Generation
-npm run db:types              # Generate TypeScript types
-
-# Database Access
-supabase db push              # Push migrations to remote (production)
-supabase db pull              # Pull migrations from remote
-supabase db dump              # Dump current schema to SQL file
-
-# Studio & Logs
-open http://localhost:54323   # Open Supabase Studio
-supabase logs                 # View all logs
-supabase logs -f postgres     # Follow Postgres logs
-```
-
----
-
-## 🗄️ Database Schema Management
-
-### Making Schema Changes with Declarative Schemas
-
-We use **declarative schemas** - you edit schema files, and migrations are auto-generated.
-
-#### Scenario 1: Adding a Column
-
-1. **Edit the schema file**
-   ```bash
-   # Edit: supabase/schemas/03_community_core.sql
-   ```
-
-   ```sql
-   CREATE TABLE users (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     auth_user_id UUID UNIQUE NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
-     
-     -- Public Community Identity
-     username TEXT UNIQUE NOT NULL,
-     display_name TEXT,
-     avatar_url TEXT,
-     banner_url TEXT,
-     bio TEXT,
-     location TEXT,
-     website TEXT,
-     phone TEXT,  -- 👈 NEW COLUMN (add at end)
-     
-     -- ... rest of table definition
-   );
-   ```
-
-2. **Generate migration**
-   ```bash
-   supabase db diff -f add_phone_to_users
-   ```
-
-   Creates: `supabase/migrations/<timestamp>_add_phone_to_users.sql`
-
-3. **Review the generated migration**
-   ```bash
-   cat supabase/migrations/<timestamp>_add_phone_to_users.sql
-   ```
-
-   Should contain:
-   ```sql
-   alter table "public"."users" add column "phone" text;
-   ```
-
-4. **Apply the migration**
-   ```bash
-   supabase migration up
-   ```
-
-5. **Update types**
-   ```bash
-   npm run db:types
-   ```
-
-6. **Verify in Studio**
-    - Check that the `phone` column exists in the `users` table
-
-#### Scenario 2: Creating a New Table
-
-1. **Create new schema file**
-   ```bash
-   # Create: supabase/schemas/10_user_preferences.sql
-   ```
-
-   ```sql
-   CREATE TABLE user_preferences (
-     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-     
-     -- Preferences
-     theme TEXT DEFAULT 'light',
-     email_notifications BOOLEAN DEFAULT TRUE,
-     push_notifications BOOLEAN DEFAULT FALSE,
-     
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-
-   CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
-   ```
-
-2. **Update `config.toml`**
-   ```toml
-   [db.migrations]
-   schema_paths = [
-     "./schemas/auth.sql",
-     # ... existing files ...
-     "./schemas/functions.sql",
-     "./schemas/user_preferences.sql",  # 👈 ADD THIS
-   ]
-   ```
-
-3. **Generate and apply migration**
-   ```bash
-   supabase db diff -f create_user_preferences
-   supabase migration up
-   npm run db:types
-   ```
-
-#### Scenario 3: Rolling Back (Local Only)
-
-```bash
-# Reset to specific migration
-supabase db reset --version <timestamp>
-
-# Or reset to clean state
+# Or reset completely:
 supabase db reset
 ```
 
-**Warning:** Only reset locally! Never reset production.
+#### 5. Deploy to Production
+
+```bash
+supabase db push
+
+# Shows diff, asks for confirmation
+```
+
+### Benefits for Our Project
+
+1. **Single Source of Truth:**
+    - One file per schema area
+    - Easy to understand table structure
+    - No hunting through 50 migration files
+
+2. **Merge Conflict Reduction:**
+    - Multiple devs can edit same schema file
+    - Git conflicts easier to resolve
+    - No duplicate migration timestamps
+
+3. **Fast Onboarding:**
+    - New devs read `schemas/` folder
+    - Complete picture in ~500 lines
+    - vs 3000+ lines scattered across migrations
+
+4. **Safe Refactoring:**
+    - Change schema, auto-generate migration
+    - Review before deploying
+    - Rollback by reverting schema change
 
 ---
 
-## 🎯 Domain Entities & Usage
+## Database Configuration
 
-### Browser Client (Client Components)
+### config.toml Settings
 
-Use in React components for client-side operations:
+```toml
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17  # Postgres 17
+
+[db.pooler]
+enabled = false  # Enable in production
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+jwt_expiry = 3600  # 1 hour
+enable_refresh_token_rotation = true
+enable_signup = true
+minimum_password_length = 8
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[realtime]
+enabled = true
+```
+
+### Connection Strings
+
+**Local Development:**
+```
+postgresql://postgres:postgres@localhost:54322/postgres
+```
+
+**Production:**
+```
+postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+```
+
+**Connection Pooler (Production):**
+```
+postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+```
+
+### Environment Variables
+
+```env
+# Client-side (Next.js)
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+
+# Server-side (Next.js Server Actions, Edge Functions)
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+
+# Direct Database (for migrations, background jobs)
+DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
+```
+
+---
+
+## RLS Policies
+
+### Row-Level Security Overview
+
+RLS allows us to control data access at the database level, not application level. This provides:
+
+1. **Security:** Policies enforced by Postgres, not our code
+2. **Simplicity:** No need to add WHERE clauses to every query
+3. **Performance:** Postgres optimizes policy checks
+4. **Multi-tenancy:** Users can only see their own data
+
+### Policy Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AUTHENTICATION LAYER                       │
+│  Better Auth validates user, creates JWT with auth.uid()    │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      RLS POLICIES                             │
+│  Postgres checks policies using auth.uid() from JWT         │
+├─────────────────────────────────────────────────────────────┤
+│  Public Content:                                             │
+│    • Anyone can SELECT unremoved posts/comments             │
+│    • Users can INSERT/UPDATE their own content              │
+│                                                              │
+│  Private Data (aide_profiles):                              │
+│    • Users can SELECT only their own profile                │
+│    • Admins (service_role) bypass RLS, see all             │
+│                                                              │
+│  Admin-Only (agencies, CRM):                                │
+│    • No public RLS policies                                 │
+│    • Only service_role can access                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Example: Posts Table Policies
+
+```sql
+-- Enable RLS on posts table
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+-- Policy 1: Anyone can read public posts
+CREATE POLICY "posts_select_public" ON posts
+FOR SELECT
+USING (
+  is_removed = FALSE AND is_spam = FALSE
+);
+
+-- Policy 2: Users can insert their own posts
+CREATE POLICY "posts_insert_own" ON posts
+FOR INSERT
+WITH CHECK (
+  auth.uid() = auth_user_id
+  -- auth_user_id references users.auth_user_id which links to auth_users.id
+);
+
+-- Policy 3: Users can update their own posts
+CREATE POLICY "posts_update_own" ON posts
+FOR UPDATE
+USING (
+  auth.uid() = (
+    SELECT auth_user_id FROM users WHERE id = posts.author_id
+  )
+);
+
+-- Policy 4: Users can delete their own posts
+CREATE POLICY "posts_delete_own" ON posts
+FOR DELETE
+USING (
+  auth.uid() = (
+    SELECT auth_user_id FROM users WHERE id = posts.author_id
+  )
+);
+```
+
+### Example: Aide Profiles (Private Data)
+
+```sql
+-- Enable RLS
+ALTER TABLE aide_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see their own aide profile
+CREATE POLICY "aide_profiles_select_own" ON aide_profiles
+FOR SELECT
+USING (
+  auth.uid() = (
+    SELECT auth_user_id FROM users WHERE id = aide_profiles.user_id
+  )
+);
+
+-- Users can update their own aide profile
+CREATE POLICY "aide_profiles_update_own" ON aide_profiles
+FOR UPDATE
+USING (
+  auth.uid() = (
+    SELECT auth_user_id FROM users WHERE id = aide_profiles.user_id
+  )
+);
+
+-- Service role bypasses RLS (for admin dashboard)
+-- No policy needed - service_role has BYPASSRLS permission
+```
+
+### Example: Agencies (Admin-Only)
+
+```sql
+-- Enable RLS
+ALTER TABLE agencies ENABLE ROW LEVEL SECURITY;
+
+-- NO public policies defined
+-- Only service_role can access this table
+-- Used in admin dashboard with server-side queries
+
+-- Example admin query:
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,  // Service role key
+  { auth: { persistSession: false } }
+);
+
+const { data: agencies } = await supabaseAdmin
+  .from('agencies')
+  .select('*');  // Works because service_role bypasses RLS
+```
+
+### Anonymous Posting Privacy
+
+For anonymous posts, we use application logic + RLS:
+
+```sql
+-- posts.is_anonymous = TRUE hides author_id in frontend
+-- But RLS still allows user to see their own posts
+
+CREATE POLICY "posts_select_own_anonymous" ON posts
+FOR SELECT
+USING (
+  -- User can always see their own posts (even if anonymous)
+  auth.uid() = (
+    SELECT auth_user_id FROM users WHERE id = posts.author_id
+  )
+  OR
+  -- Everyone else can see public posts (but not author_id if anonymous)
+  (is_removed = FALSE AND is_spam = FALSE)
+);
+```
+
+### Testing RLS Policies
+
+```sql
+-- Test as authenticated user
+SET ROLE authenticated;
+SET request.jwt.claims.sub = '<auth-user-uuid>';
+
+-- Try queries
+SELECT * FROM posts;  -- Should work (public posts)
+SELECT * FROM aide_profiles;  -- Should only show own profile
+SELECT * FROM agencies;  -- Should fail (no policy)
+
+-- Reset
+RESET ROLE;
+
+-- Test as anonymous user
+SET ROLE anon;
+
+SELECT * FROM posts;  -- Should work (public posts)
+SELECT * FROM aide_profiles;  -- Should fail (no policy)
+
+RESET ROLE;
+```
+
+---
+
+## Storage
+
+### Storage Buckets
+
+We use Supabase Storage for user-generated media:
 
 ```typescript
-import { db } from '@/lib/supabase/client';
+// Storage bucket configuration
+const buckets = {
+  avatars: {
+    public: true,
+    fileSizeLimit: 2 * 1024 * 1024,  // 2MB
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  banners: {
+    public: true,
+    fileSizeLimit: 5 * 1024 * 1024,  // 5MB
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  },
+  post_media: {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024,  // 10MB
+    allowedMimeTypes: [
+      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+      'video/mp4', 'video/webm',
+    ],
+  },
+  dm_attachments: {
+    public: false,  // Private, requires auth
+    fileSizeLimit: 10 * 1024 * 1024,  // 10MB
+    allowedMimeTypes: [
+      'image/jpeg', 'image/png', 'application/pdf',
+    ],
+  },
+};
+```
 
-// Users Domain
-const user = await db.users.getOne(userId);
-const userByUsername = await db.users.getByUsername(username);
-const users = await db.users.getMany(page, limit);
-const searchResults = await db.users.search(query);
-const topUsers = await db.users.getTopByKarma(limit);
+### Storage RLS Policies
 
-// Communities Domain
-const community = await db.communities.getOne(communityId);
-const communityBySlug = await db.communities.getBySlug(slug);
-const communities = await db.communities.getMany(page, limit);
-const trending = await db.communities.getTrending(limit);
-const searchResults = await db.communities.search(query);
+```sql
+-- avatars bucket: Anyone can read, users can upload their own
+CREATE POLICY "Avatar images are publicly accessible"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'avatars');
 
-// Posts Domain
-const post = await db.posts.getOne(postId);
-const communityPosts = await db.posts.getByCommunity(communityId, page, limit);
-const userPosts = await db.posts.getByAuthor(authorId, page, limit);
-const hotPosts = await db.posts.getHot(communityId, limit);
-const recentPosts = await db.posts.getRecent(limit);
-const searchResults = await db.posts.search(query, limit);
+CREATE POLICY "Users can upload their own avatar"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'avatars'
+  AND auth.uid() = owner
+);
 
-// Comments Domain
-const comment = await db.comments.getOne(commentId);
-const postComments = await db.comments.getByPost(postId, limit);
-const replies = await db.comments.getReplies(parentId, limit);
-const userComments = await db.comments.getByAuthor(authorId, limit);
+-- dm_attachments bucket: Private, auth required
+CREATE POLICY "Users can only see their own DM attachments"
+ON storage.objects FOR SELECT
+USING (
+  bucket_id = 'dm_attachments'
+  AND auth.uid() = owner
+);
+```
 
-// Votes Domain
-const userVote = await db.votes.getByUser(userId, votableId, 'post');
-const allVotes = await db.votes.getByUserId(userId);
+### Upload Example
 
-// Memberships Domain
-const membership = await db.memberships.getOne(userId, communityId);
-const userCommunities = await db.memberships.getCommunitiesByUser(userId);
-const communityMembers = await db.memberships.getByCommunity(communityId);
+```typescript
+// Upload avatar
+async function uploadAvatar(file: File, userId: string) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}-${Date.now()}.${fileExt}`;
+  const filePath = `avatars/${fileName}`;
+  
+  const { data, error } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+  
+  if (error) throw error;
+  
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+  
+  return publicUrl;
+}
+```
 
-// Notifications Domain
-const unread = await db.notifications.getUnread(userId, limit);
-const all = await db.notifications.getByUser(userId, limit);
-await db.notifications.markAsRead(notificationId);
+---
 
-// Real-time Subscriptions
-db.realtime.onNewPost(communityId, (post) => {
-  console.log('New post:', post);
+## Realtime
+
+### Realtime Subscriptions
+
+We use Supabase Realtime for live updates:
+
+```typescript
+// Subscribe to new posts in a community
+const channel = supabase
+  .channel('community_posts')
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'posts',
+      filter: `community_id=eq.${communityId}`,
+    },
+    (payload) => {
+      console.log('New post:', payload.new);
+      // Update UI with new post
+      setPosts((prev) => [payload.new, ...prev]);
+    }
+  )
+  .subscribe();
+
+// Cleanup on unmount
+return () => {
+  supabase.removeChannel(channel);
+};
+```
+
+### Use Cases
+
+1. **Live Feed Updates:**
+    - New posts appear without refresh
+    - New comments appear in real-time
+
+2. **DM Notifications:**
+    - Instant message delivery
+    - Typing indicators
+
+3. **Community Activity:**
+    - Live user count
+    - Active discussions
+
+4. **Admin Dashboard:**
+    - New leads appear instantly
+    - Sales activity updates
+
+### Performance Considerations
+
+- Limit subscriptions to visible data only
+- Use filters to reduce payload size
+- Unsubscribe when component unmounts
+- Consider using presence for user status
+
+---
+
+## Edge Functions
+
+### When to Use Edge Functions
+
+Use Edge Functions for:
+
+1. **Webhooks:** External API callbacks
+2. **Scheduled Tasks:** Cron jobs (daily stats)
+3. **Complex Business Logic:** Multi-step operations
+4. **External API Calls:** Third-party integrations
+5. **Email Sending:** Transactional emails
+
+### Example: Daily Stats Aggregation
+
+```typescript
+// supabase/functions/daily-stats/index.ts
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+serve(async (req) => {
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  
+  // Aggregate stats
+  const { data: users } = await supabaseAdmin
+    .from('users')
+    .select('id, created_at');
+  
+  const { data: posts } = await supabaseAdmin
+    .from('posts')
+    .select('id, created_at, is_anonymous');
+  
+  // Insert into daily_community_stats
+  const { error } = await supabaseAdmin
+    .from('daily_community_stats')
+    .insert({
+      date: yesterday.toISOString().split('T')[0],
+      total_users: users?.length || 0,
+      new_users: users?.filter(u => 
+        new Date(u.created_at).toDateString() === yesterday.toDateString()
+      ).length || 0,
+      total_posts: posts?.length || 0,
+      new_posts: posts?.filter(p =>
+        new Date(p.created_at).toDateString() === yesterday.toDateString()
+      ).length || 0,
+      anonymous_posts_created: posts?.filter(p =>
+        new Date(p.created_at).toDateString() === yesterday.toDateString() &&
+        p.is_anonymous
+      ).length || 0,
+    });
+  
+  return new Response(
+    JSON.stringify({ success: !error, error }),
+    { headers: { 'Content-Type': 'application/json' } }
+  );
 });
 ```
 
-### Server Client (Server Components & Actions)
+### Deploying Edge Functions
 
-Use repositories for server-side operations:
+```bash
+# Deploy function
+supabase functions deploy daily-stats
 
-```typescript
-import {
-  getUserRepository,
-  getCommunityRepository,
-  getPostRepository,
-  getCommentRepository,
-  getCommunityMemberRepository,
-  getAdminRepository,
-  getCurrentUser,
-  getSession,
-} from '@/lib/supabase/server';
-
-// Authentication
-const user = await getCurrentUser();
-const session = await getSession();
-
-// User Repository
-const userRepo = await getUserRepository();
-const user = await userRepo.getOne(userId);
-const user = await userRepo.getByUsername(username);
-await userRepo.create({ email, username });
-await userRepo.update(userId, { bio });
-
-// Community Repository
-const communityRepo = await getCommunityRepository();
-const community = await communityRepo.getOne(communityId);
-await communityRepo.create({ name, slug, created_by });
-await communityRepo.update(communityId, { description });
-
-// Post Repository
-const postRepo = await getPostRepository();
-const post = await postRepo.getOne(postId);
-await postRepo.create({ title, content, author_id, community_id });
-await postRepo.update(postId, { title, content });
-
-// Comment Repository
-const commentRepo = await getCommentRepository();
-const comment = await commentRepo.getOne(commentId);
-await commentRepo.create({ content, author_id, post_id });
-
-// Membership Repository
-const memberRepo = await getCommunityMemberRepository();
-await memberRepo.join(userId, communityId);
-await memberRepo.leave(userId, communityId);
-
-// Admin Repository (requires service_role)
-const adminRepo = await getAdminRepository();
-await adminRepo.banUser(userId, 'spam', 3600);
-await adminRepo.removePost(postId, 'violates rules', adminId);
+# Set up cron schedule (in Supabase Dashboard)
+# Schedule: 0 5 * * * (5 AM UTC daily)
 ```
 
 ---
 
-## 📚 Complete Usage Examples
+## Client Integration
 
-### Example 1: User Profile Page (Client Component)
+### Supabase Client Setup
 
 ```typescript
-// app/profile/[username]/page.tsx
-'use client';
+// lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from './database.types';
 
-import { useEffect, useState } from 'react';
-import { db } from '@/lib/supabase/client';
-
-export default function ProfilePage({ params }: { params: { username: string } }) {
-  const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        // Get user by username
-        const userData = await db.users.getByUsername(params.username);
-        setUser(userData);
-
-        // Get user's posts
-        const userPosts = await db.posts.getByAuthor(userData.id);
-        setPosts(userPosts);
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProfile();
-  }, [params.username]);
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <div>User not found</div>;
-
-  return (
-    <div>
-      <h1>{user.display_name}</h1>
-      <p>@{user.username}</p>
-      <p>{user.bio}</p>
-      <p>Karma: {user.karma}</p>
-
-      <h2>Posts</h2>
-      {posts?.map((post) => (
-        <div key={post.id}>
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
-        </div>
-      ))}
-    </div>
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 ```
 
-### Example 2: Create Post (Server Action)
+### Server-Side Client (Next.js Server Actions)
 
 ```typescript
-// app/actions/posts.ts
-'use server';
+// lib/supabase/server.ts
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from './database.types';
 
-import { getPostRepository, getCurrentUser } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-
-export async function createPost(
-  title: string,
-  content: string,
-  communityId: string,
-  isAnonymous: boolean = false
-) {
-  // Get current user
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
-
-  // Create post
-  const postRepo = await getPostRepository();
-  const post = await postRepo.create({
-    title,
-    content,
-    author_id: user.id,
-    community_id: communityId,
-    content_type: 'text',
-    is_anonymous: isAnonymous,  // 👈 Catharsis Engine
-  });
-
-  return post;
+export async function createClient() {
+  const cookieStore = await cookies();
+  
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
 }
 ```
 
-### Example 3: Join Community (Server Action)
+### Admin Client (Service Role)
 
 ```typescript
-// app/actions/communities.ts
-'use server';
+// lib/supabase/admin.ts
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
-import {
-  getCommunityMemberRepository,
-  getCurrentUser,
-} from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-
-export async function joinCommunity(
-  communityId: string,
-  flairText?: string
-) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/login');
-
-  const memberRepo = await getCommunityMemberRepository();
-  await memberRepo.join(user.id, communityId);
-  
-  // Set flair if provided (Data Engine)
-  if (flairText) {
-    // Update membership with flair
-    // This will be in your membership repo methods
+export const supabaseAdmin = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   }
-}
+);
 ```
 
-### Example 4: Real-Time Feed (Client Component)
+### Type-Safe Queries
 
 ```typescript
-// components/live-feed.tsx
-'use client';
+// Queries are fully typed thanks to database.types.ts
+const { data: posts, error } = await supabase
+  .from('posts')  // TypeScript knows this is the posts table
+  .select('id, title, author:users(username, karma)')  // Autocomplete works!
+  .eq('community_id', communityId)
+  .order('created_at', { ascending: false })
+  .limit(20);
 
-import { useEffect, useState } from 'react';
-import { db } from '@/lib/supabase/client';
-
-export function LiveFeed({ communityId }: { communityId: string }) {
-  const [posts, setPosts] = useState<any[]>([]);
-
-  useEffect(() => {
-    // Load initial posts
-    const loadPosts = async () => {
-      const data = await db.posts.getByCommunity(communityId);
-      setPosts(data);
-    };
-
-    loadPosts();
-
-    // Subscribe to new posts
-    const subscription = db.realtime.onNewPost(communityId, (newPost) => {
-      setPosts((prev) => [newPost, ...prev]);
-    });
-
-    // Cleanup
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [communityId]);
-
-  return (
-    <div>
-      {posts.map((post) => (
-        <div key={post.id} className="p-4 border rounded">
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
-          <p className="text-sm text-gray-500">
-            {post.is_anonymous ? (
-              <span>by AnonymousAide</span>
-            ) : (
-              <span>by {post.author.username}</span>
-            )}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-### Example 5: Admin Moderation (Server Action)
-
-```typescript
-// app/actions/admin.ts
-'use server';
-
-import { getAdminRepository, getCurrentUser } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-
-export async function banUserAction(
-  userId: string,
-  reason: string,
-  durationSeconds: number = 3600
-) {
-  const admin = await getCurrentUser();
-  if (!admin) redirect('/login');
-
-  // TODO: Verify admin permissions
-  
-  const adminRepo = await getAdminRepository();
-  await adminRepo.banUser(userId, reason, durationSeconds);
-}
-
-export async function removePostAction(
-  postId: string,
-  reason: string
-) {
-  const admin = await getCurrentUser();
-  if (!admin) redirect('/login');
-
-  const adminRepo = await getAdminRepository();
-  await adminRepo.removePost(postId, reason, admin.id);
-}
+// posts is typed as:
+// { id: string; title: string; author: { username: string; karma: number } | null }[]
 ```
 
 ---
 
-## 🧪 Testing
+## Performance Optimization
 
-### Test User Accounts
+### Query Optimization
 
-The seed data creates three test accounts (password: `password123`):
-
-| Email | Username | Role | Karma |
-|-------|----------|------|-------|
-| `aide1@test.com` | `test_aide_1` | CNA - 3 Yrs | 150 |
-| `nurse1@test.com` | `experienced_rn` | RN - 10 Yrs | 500 |
-| `don1@test.com` | `director_johnson` | DON - 20 Yrs | 1000 |
-
-### Manual Testing Flow
-
-1. **Test Authentication**
-   ```bash
-   # Open your app
-   http://localhost:3000/login
-   
-   # Login with test account
-   Email: aide1@test.com
-   Password: password123
-   ```
-
-2. **Test Community Features**
-    - Join a community (s/aides)
-    - Set flair ("CNA - 3 Yrs")
-    - Create a post
-    - Create an anonymous post
-    - Comment on posts
-    - Vote on content
-
-3. **Test Database Queries**
+1. **Use Indexes:**
    ```sql
-   -- In Supabase Studio SQL Editor
+   -- Index for feed queries
+   CREATE INDEX idx_posts_community_created 
+   ON posts(community_id, created_at DESC);
    
-   -- Check anonymous posts
-   SELECT title, is_anonymous, author_id 
-   FROM posts 
-   WHERE is_anonymous = TRUE;
+   -- Partial index for active posts
+   CREATE INDEX idx_posts_active
+   ON posts(created_at DESC)
+   WHERE is_removed = FALSE AND is_spam = FALSE;
+   ```
+
+2. **Limit Result Sets:**
+   ```typescript
+   // Always paginate
+   const { data } = await supabase
+     .from('posts')
+     .select('*')
+     .range(0, 19);  // First 20 results
+   ```
+
+3. **Select Only Needed Columns:**
+   ```typescript
+   // Bad
+   const { data } = await supabase
+     .from('posts')
+     .select('*');
    
-   -- Check user flairs
-   SELECT u.username, m.flair_text, c.name as community
-   FROM memberships m
-   JOIN users u ON m.user_id = u.id
-   JOIN communities c ON m.community_id = c.id;
+   // Good
+   const { data } = await supabase
+     .from('posts')
+     .select('id, title, created_at');
+   ```
+
+### Connection Pooling
+
+Production configuration:
+
+```toml
+[db.pooler]
+enabled = true
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+```
+
+Use pooler for serverless functions:
+
+```typescript
+// Use pooler connection string
+const DATABASE_URL = process.env.POOLER_URL;
+```
+
+### Caching Strategy
+
+1. **React Query (Frontend):**
+   ```typescript
+   const { data: posts } = useQuery({
+     queryKey: ['posts', communityId],
+     queryFn: () => fetchPosts(communityId),
+     staleTime: 60_000,  // Cache for 1 minute
+   });
+   ```
+
+2. **Next.js Cache (Server):**
+   ```typescript
+   export const revalidate = 60;  // Revalidate every 60 seconds
+   ```
+
+3. **Database-Level (Materialized Views):**
+   ```sql
+   CREATE MATERIALIZED VIEW hot_posts AS
+   SELECT * FROM posts
+   WHERE created_at > NOW() - INTERVAL '7 days'
+   ORDER BY score DESC;
    
-   -- Check karma updates
-   SELECT username, karma 
-   FROM users 
-   ORDER BY karma DESC;
+   -- Refresh hourly via cron
+   REFRESH MATERIALIZED VIEW CONCURRENTLY hot_posts;
    ```
 
 ---
 
-## 🔧 Type Generation
+## Security Best Practices
 
-### Auto-Generate Types
+### 1. Never Expose Service Role Key
 
-Setup the script in `package.json`:
+```typescript
+// ❌ BAD - Service role key in client code
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!  // NEVER do this!
+);
 
-```json
-{
-  "scripts": {
-    "db:types": "supabase gen types typescript --local > lib/supabase/types.ts"
-  }
+// ✅ GOOD - Service role only in server code
+// app/admin/actions.ts (Server Action)
+'use server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function getAgencies() {
+  const { data } = await supabaseAdmin
+    .from('agencies')
+    .select('*');
+  return data;
 }
 ```
 
-Run after any schema changes:
+### 2. Enable RLS on All Tables
 
-```bash
-npm run db:types
+```sql
+-- ✅ GOOD
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY ...
+
+-- ❌ BAD - No RLS, anyone can access
+-- (Don't forget to enable RLS!)
 ```
 
-### Manual Type Updates
-
-If CLI doesn't work:
-
-1. Go to Supabase Studio → Settings → API
-2. Copy "Type Definitions"
-3. Paste into `lib/supabase/types.ts`
-
----
-
-## 🐛 Troubleshooting
-
-### Issue 1: Supabase Won't Start
-
-**Symptom:** `supabase start` fails
-
-**Solutions:**
-```bash
-# 1. Ensure Docker is running
-docker ps
-
-# 2. Stop and reset
-supabase stop
-supabase db reset
-
-# 3. Nuclear option
-supabase stop --no-backup
-docker system prune -a --volumes
-supabase start
-```
-
-### Issue 2: Schema Changes Not Applied
-
-**Symptom:** Changes don't appear in database
-
-**Solutions:**
-```bash
-# Generate new migration
-supabase db diff -f my_changes
-
-# Apply migrations
-supabase migration up
-
-# Update types
-npm run db:types
-
-# Or reset completely (local only)
-supabase db reset
-```
-
-### Issue 3: Type Errors
-
-**Symptom:** TypeScript errors in domain client usage
-
-**Solutions:**
-```bash
-# Regenerate types
-npm run db:types
-
-# Restart TypeScript server in VSCode
-Cmd+Shift+P → "TypeScript: Restart TS Server"
-```
-
-### Issue 4: RLS Blocking Queries
-
-**Symptom:** "new row violates row-level security policy"
-
-**Solutions:**
-```typescript
-// For admin operations, use service role
-import { createServiceRoleClient } from '@/lib/supabase/server';
-
-const adminClient = createServiceRoleClient();
-// This bypasses RLS
-```
-
-### Issue 5: Port Already in Use
-
-**Symptom:** "Port 54321 is already allocated"
-
-**Solutions:**
-```bash
-# Stop Supabase
-supabase stop
-
-# Check port usage
-lsof -i :54321
-
-# Kill process
-kill -9 <PID>
-
-# Restart
-supabase start
-```
-
-### Issue 6: Missing Environment Variables
-
-**Symptom:** "Missing env.NEXT_PUBLIC_SUPABASE_URL"
-
-**Solutions:**
-```bash
-# Check .env.local exists
-cat .env.local
-
-# Restart dev server
-npm run dev
-```
-
----
-
-## 📚 Additional Resources
-
-### Supabase Documentation
-- [Local Development](https://supabase.com/docs/guides/cli/local-development)
-- [Declarative Schemas](https://supabase.com/docs/guides/cli/declarative-database-schemas)
-- [Database Migrations](https://supabase.com/docs/guides/cli/managing-environments)
-
-### Better Auth Documentation
-- [Better Auth Docs](https://www.better-auth.com/docs)
-- [Next.js Integration](https://www.better-auth.com/docs/integrations/next-js)
-
-### Internal Documentation
-- [Schema Guide](./SCHEMA_GUIDE.md) - Database architecture deep dive
-- [Architecture Doc](../ARCHITECTURE.md) - System design overview
-
----
-
-## ✨ Best Practices
-
-### 1. Use Server Components for Data Loading
+### 3. Validate Input
 
 ```typescript
-// ✅ Good - Server Component
-async function UserProfile({ userId }: { userId: string }) {
-  const userRepo = await getUserRepository();
-  const user = await userRepo.getOne(userId);
-  return <div>{user.display_name}</div>;
-}
+// ✅ GOOD
+const title = input.title.trim().substring(0, 300);
 
-// ❌ Avoid - Client Component with useEffect
-'use client';
-function UserProfile({ userId }: { userId: string }) {
-  const [user, setUser] = useState(null);
-  useEffect(() => {
-    // Loading in client component
-  }, []);
+const { error } = await supabase
+  .from('posts')
+  .insert({ title, author_id: user.id });
+
+if (error) {
+  // Handle constraint violations
 }
 ```
 
-### 2. Handle Errors Gracefully
+### 4. Use Prepared Statements
+
+Supabase automatically uses prepared statements, but avoid string interpolation:
 
 ```typescript
-try {
-  const user = await db.users.getOne(userId);
-} catch (error: any) {
-  if (error.code === 'PGRST116') {
-    console.error('User not found');
-  } else {
-    console.error('Database error:', error);
-  }
-}
-```
+// ❌ BAD - SQL injection risk
+const { data } = await supabase
+  .rpc('search_posts', { query: userInput });  // If RPC doesn't sanitize
 
-### 3. Validate Authentication
-
-```typescript
-export async function protectedAction() {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-  // Proceed
-}
-```
-
-### 4. Use Domain Methods Over Raw Queries
-
-```typescript
-// ✅ Good - Domain method
-const posts = await db.posts.getByCommunity(communityId);
-
-// ❌ Avoid - Raw query
+// ✅ GOOD - Use parameters
 const { data } = await supabase
   .from('posts')
   .select('*')
-  .eq('community_id', communityId);
+  .ilike('title', `%${userInput}%`);  // Supabase sanitizes
+```
+
+### 5. Rate Limiting
+
+Implement rate limiting for auth endpoints:
+
+```toml
+[auth.rate_limit]
+email_sent = 2  # Max 2 emails per hour
+sign_in_sign_ups = 30  # Max 30 sign-ins per 5 min per IP
 ```
 
 ---
 
-## 🎯 Next Steps
+## Monitoring & Debugging
 
-Once your local environment is set up:
+### Query Performance
 
-1. ✅ **Verify Setup** - All tables created, seed data loaded
-2. ✅ **Generate Types** - Run `npm run db:types`
-3. ✅ **Test Domain Clients** - Try the usage examples above
-4. ⏭️ **Build Features** - Start building your first feature
-5. ⏭️ **Extend Schema** - Add new tables using declarative schemas
-6. ⏭️ **Deploy to Production** - When ready, push to Supabase cloud
+```sql
+-- Enable pg_stat_statements
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+-- View slow queries
+SELECT 
+  mean_exec_time,
+  calls,
+  query
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
+LIMIT 10;
+```
+
+### Logs
+
+View logs in Supabase Dashboard:
+- **Database Logs:** Query performance, errors
+- **API Logs:** Request/response logs
+- **Realtime Logs:** Subscription events
+
+### Health Checks
+
+```typescript
+// app/api/health/route.ts
+export async function GET() {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1)
+      .single();
+    
+    if (error) throw error;
+    
+    return Response.json({
+      status: 'healthy',
+      database: { status: 'connected' },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return Response.json({
+      status: 'unhealthy',
+      database: { status: 'disconnected', error: error.message },
+      timestamp: new Date().toISOString(),
+    }, { status: 503 });
+  }
+}
+```
 
 ---
 
-**Version:** 2.1  
-**Last Updated:** November 2025  
-**Status:** ✅ Production Ready with Domain-Driven Architecture
+## Resources
 
-**Happy coding! 🚀**
+### Official Documentation
+
+- [Supabase Docs](https://supabase.com/docs)
+- [Declarative Schema Guide](https://supabase.com/docs/guides/local-development/declarative-schema)
+- [RLS Guide](https://supabase.com/docs/guides/auth/row-level-security)
+- [CLI Reference](https://supabase.com/docs/reference/cli)
+
+### Internal Documentation
+
+- `SCHEMA.md` - Complete schema reference
+- `SETUP.md` - Setup instructions
+- `README.md` - Project overview
+
+---
+
+**Integration Status:** ✅ Production Ready  
+**Last Updated:** November 2025  
+**Maintained By:** 10xR Engineering Team
