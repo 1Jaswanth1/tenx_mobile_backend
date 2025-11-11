@@ -27,7 +27,7 @@
     "// Type Generation": "",
     "supabase:types": "supabase gen types typescript --local --schema public > lib/supabase/database.types.ts",
     "supabase:types:watch": "nodemon --watch supabase/schemas --ext sql --exec \"pnpm supabase:types\"",
-    "supabase:types:remote": "supabase gen types typescript --project-id lheiimddwbfapphgnozx --schema public > lib/supabase/database.types.ts",
+    "supabase:types:remote": "supabase gen types typescript --project-id lheiimddwbfapphgnozx --schema public > lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
