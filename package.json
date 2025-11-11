@@ -24,7 +24,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "postinstall": "npx patch-package -y",
     "db:setup": "echo 'Please run the SQL schema in Supabase Dashboard → SQL Editor'",
-    "db:types": "supabase gen types typescript --project-id YOUR_PROJECT_ID > lib/supabase/types.ts",
+    "db:types": "npx supabase gen types typescript --project-id lheiimddwbfapphgnozx --schema public > lib/supabase/types.ts",
     "auth:generate": "npx @better-auth/cli@latest generate"
   },
   "dependencies": {
@@ -82,7 +82,6 @@
     "react-resizable-panels": "^3.0.6",
     "recharts": "2.15.4",
     "sonner": "^2.0.7",
-    "supabase": "^2.54.11",
     "superjson": "^2.2.5",
     "tailwind-merge": "^2.6.0",
     "vaul": "^1.1.2",
