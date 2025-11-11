@@ -84,15 +84,15 @@ Your project should now have this structure:
 │   ├── seed.sql            # Seed data for local dev
 │   ├── migrations/         # Generated migration files (auto-created)
 │   └── schemas/            # Declarative schema files
-│       ├── 01_auth.sql     # Better Auth tables
-│       ├── 02_types.sql    # Custom ENUM types
-│       ├── 03_community_core.sql  # Users, communities, memberships
-│       ├── 04_content.sql  # Posts, comments, votes
-│       ├── 05_engagement.sql      # Saved posts, follows, notifications
-│       ├── 06_messaging.sql       # Direct messages
-│       ├── 07_b2b_sales.sql       # Agencies, aide profiles
-│       ├── 08_analytics.sql       # Activity logs, stats
-│       └── 09_functions.sql       # Triggers and functions
+│       ├── auth.sql        # Better Auth tables
+│       ├── types.sql       # Custom ENUM types
+│       ├── community_core.sql  # Users, communities, memberships
+│       ├── content.sql         # Posts, comments, votes
+│       ├── engagement.sql      # Saved posts, follows, notifications
+│       ├── messaging.sql       # Direct messages
+│       ├── b2b_sales.sql       # Agencies, aide profiles
+│       ├── analytics.sql       # Activity logs, stats
+│       └── functions.sql       # Triggers and functions
 │
 ├── app/
 │   └── actions/            # Server actions using domain repositories
@@ -420,10 +420,10 @@ We use **declarative schemas** - you edit schema files, and migrations are auto-
    ```toml
    [db.migrations]
    schema_paths = [
-     "./schemas/01_auth.sql",
+     "./schemas/auth.sql",
      # ... existing files ...
-     "./schemas/09_functions.sql",
-     "./schemas/10_user_preferences.sql",  # 👈 ADD THIS
+     "./schemas/functions.sql",
+     "./schemas/user_preferences.sql",  # 👈 ADD THIS
    ]
    ```
 
