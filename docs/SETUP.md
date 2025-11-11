@@ -104,6 +104,10 @@ supabase init
 # - supabase/config.toml (configuration)
 # - supabase/.gitignore
 
+# Create initial DB migration schema
+# Creates a file with detailed commands for initial migration
+supabase db diff -f <file name>
+
 # Start Supabase services locally
 supabase start
 
@@ -177,7 +181,8 @@ supabase/
 │   ├── messaging.sql          # Direct messages
 │   ├── b2b_sales.sql          # Agencies, CRM
 │   ├── analytics.sql          # Tracking, metrics
-│   └── functions.sql          # Triggers, stored procedures
+│   └── functions.sql          # Triggers and stored procedures
+│   └── rls_policies.sql       # Row Level Security Policies
 │
 ├── migrations/                 # Auto-generated (don't edit manually)
 │   ├── 20241101000000_initial_schema.sql
@@ -203,7 +208,8 @@ schema_paths = [
   "./schemas/messaging.sql",       # 6. Direct messages
   "./schemas/b2b_sales.sql",       # 7. B2B CRM
   "./schemas/analytics.sql",       # 8. Analytics
-  "./schemas/functions.sql",       # 9. Functions last
+  "./schemas/functions.sql",       # 9. Functions
+  "./schemas/rls_policies.sql",    # 10. Row Level Security Policies last
 ]
 
 [db.seed]
@@ -234,6 +240,23 @@ supabase db reset
 # Applying migration 20241101000000_initial_schema.sql...
 # Seeding data from seed.sql...
 # Finished supabase db reset on branch main.
+
+# Method 2: Perform migration for incremental changes to declarative schema
+# Stop supabase server if running
+supabase stop
+
+# Take back-up of existing data (Optional)
+supabase db dump -f supabase/seed.sql --data-only
+
+# Get migration commands ready
+supabase db diff -f <change_list>
+
+# Start migration
+supabase start
+supabase migration up
+
+# Use --debug flag to figure out errors when required
+
 ```
 
 ### Step 6: Verify Schema

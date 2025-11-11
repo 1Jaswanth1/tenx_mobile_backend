@@ -181,6 +181,7 @@ supabase/
 │   ├── b2b_sales.sql          # agencies, aide_profiles, leads
 │   ├── analytics.sql          # user_activity_log, daily_stats
 │   └── functions.sql          # Triggers and stored procedures
+│   └── rls_policies.sql       # Row Level Security Policies
 │
 ├── migrations/                 # AUTO-GENERATED (don't edit manually)
 │   ├── 20241101000000_initial_schema.sql
@@ -207,7 +208,8 @@ schema_paths = [
   "./schemas/messaging.sql",       # 6. Messaging
   "./schemas/b2b_sales.sql",       # 7. B2B CRM
   "./schemas/analytics.sql",       # 8. Analytics
-  "./schemas/functions.sql",       # 9. Functions last
+  "./schemas/functions.sql",       # 9. Functions 
+  "./schemas/rls_policies.sql"     # 10. Row Level Security Policies last 
 ]
 ```
 

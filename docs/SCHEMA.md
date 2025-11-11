@@ -23,6 +23,7 @@ supabase/schemas/
 ├── b2b_sales.sql          # Agencies, CRM (5 tables)
 ├── analytics.sql          # Tracking, metrics (2 tables)
 └── functions.sql          # Triggers and stored procedures
+└── rls_policies.sql       # Row Level Security Policies
 ```
 
 **Total:** 29 tables, 13 custom types, 15+ trigger functions

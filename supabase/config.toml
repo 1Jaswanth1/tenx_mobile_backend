@@ -62,7 +62,8 @@ schema_paths = [
     "./schemas/messaging.sql",
     "./schemas/b2b_sales.sql",
     "./schemas/analytics.sql",
-    "./schemas/functions.sql"
+    "./schemas/functions.sql",
+    "./schemas/rls_policies.sql"
 ]
 
 [db.seed]
