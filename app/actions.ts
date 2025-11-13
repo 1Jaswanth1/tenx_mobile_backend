@@ -950,6 +950,223 @@ export async function createComment(formData: FormData) {
 }
 
 /**
+ * Server Action: Create or Get Chat Room
+ *
+ * Creates a new 1-on-1 chat room between current user and target user.
+ * Returns existing room if one already exists between the two users.
+ *
+ * @param targetUserId - ID of the user to chat with
+ * @returns Room ID
+ */
+export async function createOrGetChatRoom(targetUserId: string) {
+  // ============================================================================
+  // STEP 1: Authentication Check
+  // ============================================================================
+  const session = await auth();
+  const authUser = session?.user;
+
+  if (!authUser) {
+    return redirect('/login');
+  }
+
+  // ============================================================================
+  // STEP 2: Get User Profile from Supabase
+  // ============================================================================
+  const supabase = await createClient();
+
+  const { data: userProfile, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUser.id)
+    .single();
+
+  if (userError || !userProfile) {
+    console.error('Error fetching user profile:', userError);
+    throw new Error('Failed to verify user account.');
+  }
+
+  // ============================================================================
+  // STEP 3: Validate Target User
+  // ============================================================================
+  if (!targetUserId || targetUserId === userProfile.id) {
+    throw new Error('Invalid target user.');
+  }
+
+  // Verify target user exists
+  const { data: targetUser, error: targetError } = await supabase
+    .from('users')
+    .select('id, username')
+    .eq('id', targetUserId)
+    .single();
+
+  if (targetError || !targetUser) {
+    console.error('Error fetching target user:', targetError);
+    throw new Error('Target user not found.');
+  }
+
+  // ============================================================================
+  // STEP 4: Check if Room Already Exists
+  // ============================================================================
+  // Query for existing room between these two users
+  const { data: existingRooms, error: existingError } = await supabase
+    .from('chat_room_member')
+    .select(
+      `
+      chat_room_id,
+      chat_room:chat_room!inner (
+        id,
+        is_direct
+      )
+    `
+    )
+    .eq('member_id', userProfile.id);
+
+  if (existingError) {
+    console.error('Error checking existing rooms:', existingError);
+    throw new Error('Failed to check existing chat rooms.');
+  }
+
+  // Find room where both users are members
+  for (const membership of existingRooms || []) {
+    const { data: otherMember } = await supabase
+      .from('chat_room_member')
+      .select('member_id')
+      .eq('chat_room_id', membership.chat_room_id)
+      .eq('member_id', targetUserId)
+      .single();
+
+    if (otherMember) {
+      // Room already exists, revalidate and return
+      revalidatePath('/chat');
+      return { roomId: membership.chat_room_id };
+    }
+  }
+
+  // ============================================================================
+  // STEP 5: Create New Chat Room
+  // ============================================================================
+  try {
+    // Use the helper function from database schema
+    const { data: roomId, error: createError } = await supabase.rpc(
+      'get_or_create_chat_room',
+      {
+        user1_id: userProfile.id,
+        user2_id: targetUserId,
+      }
+    );
+
+    if (createError) {
+      console.error('Error creating chat room:', createError);
+      throw new Error('Failed to create chat room.');
+    }
+
+    // Revalidate chat list
+    revalidatePath('/chat');
+
+    return { roomId };
+  } catch (error: any) {
+    console.error('Unexpected error creating chat room:', error);
+    throw new Error('An unexpected error occurred. Please try again later.');
+  }
+}
+
+/**
+ * Server Action: Send Message
+ *
+ * Sends a message to a chat room.
+ * Validates user is a member of the room before allowing message send.
+ *
+ * @param formData - Form data containing roomId and message text
+ */
+export async function sendMessage(formData: FormData) {
+  // ============================================================================
+  // STEP 1: Authentication Check
+  // ============================================================================
+  const session = await auth();
+  const authUser = session?.user;
+
+  if (!authUser) {
+    return redirect('/login');
+  }
+
+  // ============================================================================
+  // STEP 2: Get User Profile from Supabase
+  // ============================================================================
+  const supabase = await createClient();
+
+  const { data: userProfile, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_user_id', authUser.id)
+    .single();
+
+  if (userError || !userProfile) {
+    console.error('Error fetching user profile:', userError);
+    return { status: 'error', message: 'Failed to verify user account.' };
+  }
+
+  // ============================================================================
+  // STEP 3: Extract and Validate Input
+  // ============================================================================
+  const roomId = formData.get('roomId') as string;
+  const messageText = (formData.get('message') as string)?.trim();
+
+  if (!roomId) {
+    return { status: 'error', message: 'Room ID is required.' };
+  }
+
+  if (!messageText || messageText === '') {
+    return { status: 'error', message: 'Message text is required.' };
+  }
+
+  if (messageText.length > 10000) {
+    return { status: 'error', message: 'Message is too long (max 10,000 characters).' };
+  }
+
+  // ============================================================================
+  // STEP 4: Verify User is Member of Room
+  // ============================================================================
+  const { data: membership, error: membershipError } = await supabase
+    .from('chat_room_member')
+    .select('chat_room_id')
+    .eq('chat_room_id', roomId)
+    .eq('member_id', userProfile.id)
+    .single();
+
+  if (membershipError || !membership) {
+    console.error('Error verifying membership:', membershipError);
+    return { status: 'error', message: 'You are not a member of this chat room.' };
+  }
+
+  // ============================================================================
+  // STEP 5: Insert Message
+  // ============================================================================
+  try {
+    const { error: insertError } = await supabase.from('message').insert({
+      chat_room_id: roomId,
+      author_id: userProfile.id,
+      text: messageText,
+    });
+
+    if (insertError) {
+      console.error('Error sending message:', insertError);
+      return { status: 'error', message: 'Failed to send message.' };
+    }
+
+    // Revalidate chat room page
+    revalidatePath(`/chat/${roomId}`);
+
+    return { status: 'success', message: 'Message sent!' };
+  } catch (error: any) {
+    console.error('Unexpected error sending message:', error);
+    return {
+      status: 'error',
+      message: 'An unexpected error occurred. Please try again later.',
+    };
+  }
+}
+
+/**
  * Type definition for server action responses
  * Use this for type-safe handling in components
  */

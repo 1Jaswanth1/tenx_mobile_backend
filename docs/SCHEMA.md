@@ -24,6 +24,7 @@ supabase/schemas/
 ├── analytics.sql          # Tracking, metrics (2 tables)
 └── functions.sql          # Triggers and stored procedures
 └── rls_policies.sql       # Row Level Security Policies
+└── direct_chat.sql        # Direct Chat tables
 ```
 
 **Total:** 29 tables, 13 custom types, 15+ trigger functions

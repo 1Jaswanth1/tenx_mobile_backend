@@ -729,6 +729,199 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Time-based relative timestamps
 - JSON content parsing for TipTap
 
+#### 1-on-1 Direct Messaging System
+
+**Complete real-time chat functionality for direct messaging:**
+
+- **Chat Database Schema** (`supabase/schemas/direct_chat.sql`)
+  - Declarative SQL schema for 1-on-1 chat system
+  - Tables:
+    - `chat_room` - Individual chat rooms
+      - Supports direct (1-on-1) and group chat types
+      - Tracks creation and last update timestamps
+      - Optional room names
+    - `chat_room_member` - Room membership tracking
+      - Many-to-many relationship between users and rooms
+      - Tracks `last_read_at` for unread message counting
+      - Joined timestamp for membership history
+    - `message` - Chat messages
+      - Message content with timestamps
+      - Soft delete support (`is_deleted` flag)
+      - Edit tracking (`is_edited` flag)
+      - Links to author and room
+  - Helper Functions:
+    - `get_or_create_chat_room(user1_id, user2_id)` - Creates or retrieves existing room
+    - `get_unread_count(p_user_id, p_room_id)` - Calculates unread messages
+  - Trigger-based duplicate prevention:
+    - `prevent_duplicate_chat_room()` trigger function
+    - Ensures same user pair can only have one direct chat room
+    - Raises exception if duplicate room is attempted
+  - RLS Policies:
+    - Room members can view their rooms
+    - Room members can view messages
+    - Room members can send messages
+    - Users can read their own membership data
+    - Secure message deletion and editing
+
+- **Chat Layout** (`app/(chat)/layout.tsx`)
+  - Protected layout for all chat routes
+  - BetterAuth session validation
+  - Redirects unauthenticated users to login
+  - Responsive container with proper spacing
+
+- **Server Actions** (`app/actions.ts`)
+  - `createOrGetChatRoom(targetUserId)`:
+    - Finds existing room between two users
+    - Creates new room via RPC function if none exists
+    - Automatic cache revalidation
+    - Returns room ID for navigation
+  - `sendMessage(formData)`:
+    - Validates room membership before sending
+    - Message text validation (required, max 5000 chars)
+    - Inserts message with proper foreign keys
+    - Automatic cache revalidation
+    - Error handling with user feedback
+
+- **Chat List Page** (`app/(chat)/page.tsx`)
+  - Server component showing all conversations
+  - Features:
+    - List of all user's chat rooms
+    - Last message preview with truncation
+    - Unread message count badges
+    - Relative timestamps (e.g., "2h ago", "Yesterday")
+    - User avatars with fallback initials
+    - Empty state with call-to-action
+  - Data fetching:
+    - Fetches all rooms user is member of
+    - Loads other member details for each room
+    - Retrieves last message for preview
+    - Calculates unread counts via RPC function
+    - Ordered by last updated (most recent first)
+  - User experience:
+    - Click any conversation to open chat room
+    - Visual unread indicators (orange badges)
+    - Responsive card-based layout
+    - UserSearchDialog integration for new chats
+
+- **User Search Dialog** (`app/components/user-search-dialog.tsx`)
+  - Client component for finding users to message
+  - Features:
+    - Modal dialog with search input
+    - Debounced search (300ms delay)
+    - Real-time user search by username
+    - Click user to start or open existing chat
+    - Loading states during search and room creation
+    - Empty states with helpful messages
+  - Search implementation:
+    - Uses Supabase ILIKE for case-insensitive search
+    - Limits to 10 results
+    - Displays avatars and usernames
+    - Handles errors gracefully with toast notifications
+  - Navigation:
+    - Creates/retrieves room via `createOrGetChatRoom`
+    - Automatically navigates to chat room
+    - Resets dialog state after navigation
+
+- **Chat Room Page** (`app/(chat)/[roomId]/page.tsx`)
+  - Server component for individual conversations
+  - Features:
+    - Full-height chat interface
+    - Header with other user's info
+    - Real-time message display
+    - Message input form
+    - Back button for mobile
+    - Avatar display with fallback
+    - Online status placeholder
+  - Data fetching:
+    - Verifies user is room member (404 if not)
+    - Fetches room details
+    - Loads other participant info
+    - Retrieves all messages ordered by time
+    - Joins with user data for message authors
+    - Updates `last_read_at` timestamp
+  - Security:
+    - Only room members can view messages
+    - Authentication required
+    - Membership validation
+
+- **ChatMessages Component** (`app/components/chat-messages.tsx`)
+  - Client component with real-time updates
+  - Features:
+    - Supabase Realtime subscription for live messages
+    - Auto-scroll to bottom on new messages
+    - Chat bubble UI grouped by sender
+    - User avatars with fallback initials
+    - Timestamp formatting (relative and absolute)
+    - Message grouping by author
+    - Empty state for new conversations
+  - Real-time implementation:
+    - Subscribes to postgres_changes INSERT events
+    - Filters by chat_room_id
+    - Fetches full message data with user info
+    - Appends new messages to state
+    - Unsubscribes on cleanup
+  - UI design:
+    - Current user messages: right-aligned, orange background
+    - Other user messages: left-aligned, muted background
+    - Usernames shown on first message in group
+    - Timestamps below each message
+    - Responsive max-width for readability
+
+- **ChatInput Component** (`app/components/chat-input.tsx`)
+  - Client component for message composition
+  - Features:
+    - Auto-resizing textarea (max 150px height)
+    - Enter to send (Shift+Enter for new line)
+    - Character limit (5000 chars)
+    - Form reset after successful send
+    - Loading states during submission
+    - Toast notifications on error
+    - Auto-focus for immediate typing
+  - Form handling:
+    - Uses `useFormState` for reactive state
+    - Integrates with `sendMessage` server action
+    - Hidden roomId field
+    - Keyboard shortcuts for UX
+    - Submit button with icon
+
+**User Experience:**
+- Real-time message delivery with instant updates
+- Smooth scrolling and message grouping
+- Clear visual distinction between sent/received messages
+- Unread message tracking and indicators
+- Fast search for starting new conversations
+- Mobile-responsive design
+- Loading skeletons and feedback
+- Toast notifications for errors
+
+**Database Integration:**
+- Three core tables with proper foreign keys
+- Cascading deletes for data integrity
+- Timestamp tracking for all operations
+- Soft delete support for messages
+- RLS policies for security
+- Efficient queries with proper indexes
+- RPC functions for complex operations
+
+**Security Features:**
+- Row Level Security on all chat tables
+- Server-side membership verification
+- Authentication required for all operations
+- Duplicate room prevention via triggers
+- Only room members can access messages
+- Server-side validation for all inputs
+- SQL injection protection via parameterized queries
+
+**Technical Stack:**
+- Supabase Realtime for live messaging
+- Postgres channels with postgres_changes events
+- Next.js 16 Server Components for data fetching
+- Client Components for interactivity
+- Server Actions for mutations
+- BetterAuth for session management
+- Responsive Tailwind CSS
+- Form-based architecture with progressive enhancement
+
 #### Individual Post Page with Comments
 
 **Complete post detail view with commenting system:**

@@ -90,38 +90,56 @@ CREATE INDEX IF NOT EXISTS idx_chat_room_member_room_id ON chat_room_member(chat
 -- ============================================================================
 -- Unique Constraint: Ensure Same User Pair Shares Only One Room
 -- ============================================================================
--- This function creates a sorted array of member IDs for a given room,
--- ensuring consistent ordering regardless of insertion order.
--- Used to enforce uniqueness across user pairs.
+-- This trigger prevents duplicate chat rooms between the same pair of users.
+-- It checks before inserting a new member if the user pair already has a room.
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION get_sorted_member_ids(room_id UUID)
-RETURNS UUID[] AS $$
-  SELECT ARRAY_AGG(member_id ORDER BY member_id)
-  FROM chat_room_member
-  WHERE chat_room_id = room_id
-$$ LANGUAGE SQL STABLE;
+CREATE OR REPLACE FUNCTION prevent_duplicate_chat_room()
+RETURNS TRIGGER AS $$
+DECLARE
+  existing_room_id UUID;
+  other_member_id UUID;
+BEGIN
+  -- Only check for direct chat rooms (1-on-1)
+  IF (SELECT is_direct FROM chat_room WHERE id = NEW.chat_room_id) THEN
+    -- Get the other member in this room (if any)
+    SELECT member_id INTO other_member_id
+    FROM chat_room_member
+    WHERE chat_room_id = NEW.chat_room_id
+      AND member_id != NEW.member_id
+    LIMIT 1;
 
--- Create unique index to prevent duplicate rooms for same user pair
--- This ensures that users A and B can only have one chat room together
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_member_pair_per_room
-ON chat_room_member (
-  (SELECT get_sorted_member_ids(chat_room_id))
-);
+    -- If there's another member, check if these two users already have a room together
+    IF other_member_id IS NOT NULL THEN
+      SELECT crm1.chat_room_id INTO existing_room_id
+      FROM chat_room_member crm1
+      JOIN chat_room_member crm2 ON crm1.chat_room_id = crm2.chat_room_id
+      JOIN chat_room cr ON crm1.chat_room_id = cr.id
+      WHERE crm1.member_id = NEW.member_id
+        AND crm2.member_id = other_member_id
+        AND cr.is_direct = true
+        AND crm1.chat_room_id != NEW.chat_room_id
+      LIMIT 1;
 
--- Alternative simpler approach using exclusion constraint
--- Uncomment if the above approach causes issues
--- Note: This requires the btree_gist extension
--- CREATE EXTENSION IF NOT EXISTS btree_gist;
---
--- ALTER TABLE chat_room_member
--- ADD CONSTRAINT unique_member_pair
--- EXCLUDE USING gist (
---   chat_room_id WITH =,
---   member_id WITH <>
--- ) WHERE (
---   (SELECT is_direct FROM chat_room WHERE id = chat_room_id) = true
--- );
+      -- If a room already exists, prevent the insert
+      IF existing_room_id IS NOT NULL THEN
+        RAISE EXCEPTION 'Chat room already exists between these users: %', existing_room_id;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to prevent duplicate rooms
+CREATE TRIGGER check_duplicate_chat_room
+  BEFORE INSERT ON chat_room_member
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_duplicate_chat_room();
+
+-- Add comment
+COMMENT ON FUNCTION prevent_duplicate_chat_room IS 'Prevents creating duplicate 1-on-1 chat rooms between the same pair of users';
 
 -- ============================================================================
 -- Table: message

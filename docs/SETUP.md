@@ -183,6 +183,7 @@ supabase/
 │   ├── analytics.sql          # Tracking, metrics
 │   └── functions.sql          # Triggers and stored procedures
 │   └── rls_policies.sql       # Row Level Security Policies
+│   └── direct_chat.sql        # Direct Chat tables
 │
 ├── migrations/                 # Auto-generated (don't edit manually)
 │   ├── 20241101000000_initial_schema.sql
@@ -209,7 +210,8 @@ schema_paths = [
   "./schemas/b2b_sales.sql",       # 7. B2B CRM
   "./schemas/analytics.sql",       # 8. Analytics
   "./schemas/functions.sql",       # 9. Functions
-  "./schemas/rls_policies.sql",    # 10. Row Level Security Policies last
+  "./schemas/rls_policies.sql",    # 10. Row Level Security Policies
+  "./schemas/direct_chat.sql"      # 11. Direct Chat tables last
 ]
 
 [db.seed]

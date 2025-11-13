@@ -498,6 +498,66 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_room: {
+        Row: {
+          created_at: string
+          id: string
+          is_direct: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_direct?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_direct?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_room_member: {
+        Row: {
+          chat_room_id: string
+          joined_at: string
+          last_read_at: string | null
+          member_id: string
+        }
+        Insert: {
+          chat_room_id: string
+          joined_at?: string
+          last_read_at?: string | null
+          member_id: string
+        }
+        Update: {
+          chat_room_id?: string
+          joined_at?: string
+          last_read_at?: string | null
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_member_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_room"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_room_member_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           author_id: string
@@ -1058,6 +1118,54 @@ export type Database = {
           },
         ]
       }
+      message: {
+        Row: {
+          author_id: string
+          chat_room_id: string
+          created_at: string
+          id: string
+          is_deleted: boolean
+          is_edited: boolean
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          chat_room_id: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          chat_room_id?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -1587,7 +1695,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_or_create_chat_room: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: string
+      }
+      get_unread_count: {
+        Args: { p_room_id: string; p_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       agency_status:
