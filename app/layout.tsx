@@ -1,6 +1,7 @@
 import "styles/tailwind.css"
 import { NavBar } from "./components/navBar"
 import { ThemeProvider } from "./components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <NavBar />
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

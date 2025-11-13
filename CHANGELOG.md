@@ -142,6 +142,744 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type-safe props using TypeScript
 - Follows Next.js 16 App Router conventions
 
+#### Secure Settings Page with Username Management
+
+**Protected settings page for authenticated users:**
+
+- **Settings Page Route** (`app/settings/page.tsx`)
+  - Async server component with BetterAuth session protection
+  - Automatically redirects unauthenticated users to `/login`
+  - Fetches user profile data from Supabase `users` table
+  - Server-side data fetching for optimal performance
+  - Links BetterAuth user ID to Supabase user profile via `auth_user_id`
+  - Passes profile data as props to client form component
+  - Includes page metadata (title, description)
+
+- **Settings Form Component** (`app/components/settings-form.tsx`)
+  - Client-side form for username updates
+  - Features:
+    - Real-time form validation with regex patterns
+    - Username constraints: 3-20 characters, alphanumeric with underscores/hyphens
+    - Character counter (current length / max length)
+    - Loading states during form submission
+    - Disabled save button when no changes or invalid input
+    - Error handling for duplicate usernames (unique constraint)
+    - Success/error toast notifications via Sonner
+    - Cancel button to navigate back to home
+    - Automatic page refresh after successful update
+  - Uses Supabase browser client for database updates
+  - Shadcn UI components: Input, Label, Button, Separator
+  - Accessible form with ARIA attributes
+  - Lowercase and trim username before saving
+
+**User Experience:**
+- Protected route prevents unauthorized access
+- Instant validation feedback as user types
+- Clear error messages for validation failures
+- Visual feedback during save operation
+- Success confirmation with toast notification
+- Responsive design with mobile support
+
+**Security Features:**
+- Server-side session validation
+- Client-side input validation before submission
+- Server-side unique constraint enforcement
+- Proper error handling without exposing system details
+- Supabase RLS policies apply to updates
+
+**Database Integration:**
+- Updates `users` table in Supabase declarative schema
+- Respects username constraints (length, format)
+- Handles unique constraint violations gracefully
+- Uses user's ID from the `users` table (not auth_user_id)
+
+#### Server Actions for Secure Data Mutations
+
+**Refactored settings page to use Next.js Server Actions:**
+
+- **Server Actions File** (`app/actions.ts`)
+  - Created centralized server actions file for all data mutations
+  - `updateUsername` server action with comprehensive validation:
+    - BetterAuth session validation on the server
+    - Input validation (length, format, required fields)
+    - Duplicate username detection with user-friendly errors
+    - Normalized username storage (lowercase, trimmed)
+    - Constraint enforcement (3-20 chars, alphanumeric with _ and -)
+    - Handles unique constraint violations (23505 error code)
+    - Automatic cache revalidation after successful update
+  - Type-safe response interface exported for components
+  - Comprehensive error handling with logging
+  - Revalidates `/settings` and `/profile` paths after mutation
+
+- **SubmitButton Component** (`app/components/submit-button.tsx`)
+  - Reusable submit button for server action forms
+  - Uses `useFormStatus` hook for automatic pending state detection
+  - Features:
+    - Loading spinner during form submission
+    - Disabled state while pending
+    - Customizable labels (idle and pending states)
+    - Configurable button variants
+    - ARIA attributes for accessibility (aria-busy, aria-live)
+    - Auto-detects parent form submission state
+  - Clean API with sensible defaults
+  - Can be used across all server action forms
+
+- **Refactored SettingsForm** (`app/components/settings-form.tsx`)
+  - Migrated from client-side Supabase mutation to Server Actions
+  - Uses `useFormState` hook for reactive state management
+  - Binds server action to form with automatic state handling
+  - Features:
+    - Progressive enhancement (works without JavaScript)
+    - Automatic error handling from server responses
+    - Toast notifications based on server action status
+    - Visual success indicator for completed updates
+    - Form validation on both client and server
+    - Cancel button to return home
+  - Removed manual Supabase client creation from component
+  - Simplified component logic (no loading state management needed)
+  - Server handles all mutation logic and security
+
+- **Layout Updates** (`app/layout.tsx`)
+  - Added Sonner Toaster component to root layout
+  - Enables toast notifications throughout the application
+  - Theme-aware toasts (respects dark/light mode)
+  - Custom icons for success, error, info, warning states
+
+**Benefits of Server Actions:**
+- **Security**: All mutations run on the server (no client-side database access)
+- **Performance**: Automatic request deduplication and caching
+- **Progressive Enhancement**: Forms work without JavaScript
+- **Simplified Code**: No need for API routes or manual fetch calls
+- **Type Safety**: End-to-end type safety from action to component
+- **Better UX**: Optimistic updates and automatic revalidation
+- **Error Handling**: Centralized error handling on the server
+
+**Technical Implementation:**
+- Server actions marked with `'use server'` directive
+- Uses Next.js `revalidatePath` for cache management
+- Leverages `useFormState` for reactive form state
+- Integrates with `useFormStatus` for pending states
+- Automatic serialization of server responses
+- Toast notifications via Sonner library
+
+#### Community Creation Feature (Reddit-Style Subreddits)
+
+**New community creation workflow at `/r/create`:**
+
+- **Create Community Server Action** (`app/actions.ts`)
+  - Added `createCommunity` server action for secure community creation
+  - Features:
+    - BetterAuth session validation (redirects to login if not authenticated)
+    - Links to user profile via `auth_user_id` lookup in `users` table
+    - Automatic slug generation from community name
+      - Converts to lowercase
+      - Replaces spaces with hyphens
+      - Removes special characters
+      - Validates slug format (alphanumeric + hyphens only)
+    - Duplicate detection for both name and slug
+    - Comprehensive validation:
+      - Required field check
+      - Length constraints (3-50 characters per schema)
+      - Format validation
+    - Error handling with user-friendly messages
+    - Handles unique constraint violations (23505 error code)
+    - Automatic cache revalidation of home page
+    - Redirects to new community page on success (`/r/{slug}`)
+  - References correct foreign key (`created_by` → `users.id`)
+  - Applies default values from schema (theme color, privacy settings, etc.)
+
+- **Create Community Page** (`app/r/create/page.tsx`)
+  - Client-side form component at `/r/create` route
+  - Features:
+    - Visual r/ prefix for community names
+    - Real-time validation feedback
+    - Character count limits (3-50 chars)
+    - Community guidelines info box
+    - Toast notifications for errors only (success redirects)
+    - Cancel button to return home
+    - SubmitButton with loading state
+  - Uses `useFormState` for reactive form management
+  - Integrates with server action seamlessly
+  - Accessible form with ARIA attributes
+  - Mobile-responsive design
+
+**User Experience:**
+- Clear visual indication of community URL format (r/ prefix)
+- Instant error feedback via toasts
+- Loading spinner during creation
+- Automatic redirect to new community
+- Helpful guidelines displayed inline
+- Persistent error messages below input
+
+**Database Integration:**
+- Creates records in `communities` table
+- Generates unique slug for URL routing
+- Links community to creator via `created_by` field
+- Respects schema constraints:
+  - Name: 3-50 characters
+  - Slug: lowercase alphanumeric + hyphens
+  - Unique constraints on both name and slug
+- Applies default values:
+  - `theme_color`: '#568AFF'
+  - `member_count`: 0
+  - `post_count`: 0
+  - `is_private`: false
+  - `is_nsfw`: false
+  - `allow_anonymous_posts`: true
+
+**Security Features:**
+- Server-side session validation before creation
+- Proper foreign key relationships maintained
+- User must be authenticated to create communities
+- All validation happens on both client and server
+- SQL injection protection via Supabase parameterized queries
+
+#### Dynamic Community Pages (`/r/[slug]`)
+
+**Individual community pages with creator-editable descriptions:**
+
+- **Dynamic Route Page** (`app/r/[id]/page.tsx`)
+  - Async server component for optimal performance
+  - Fetches community data based on slug from URL
+  - Features:
+    - Two-column responsive layout (65% posts / 35% sidebar)
+    - Server-side data fetching with Supabase
+    - Session-aware rendering (different UI for creators)
+    - Automatic 404 handling for non-existent communities
+    - DiceBear API integration for community avatars
+    - Formatted creation date display
+    - SEO-friendly metadata generation
+  - Uses `unstable_noStore` for always-fresh data
+  - Queries by slug for clean URLs
+  - Checks creator ownership for edit permissions
+
+- **Community Description Form** (`app/components/sub-description-form.tsx`)
+  - Client-side form for creator-only description editing
+  - Features:
+    - Textarea with 500 character limit
+    - Character counter display
+    - Toast notifications on save
+    - Loading states during save
+    - Error handling with inline messages
+    - Hidden slug field for identification
+  - Uses `useFormState` for reactive state
+  - Integrates with server action seamlessly
+  - Only visible to community creators
+
+- **Update Description Server Action** (`app/actions.ts`)
+  - Added `updateSubDescription` server action
+  - Features:
+    - BetterAuth session validation
+    - User profile lookup via `auth_user_id`
+    - Ownership verification before update
+    - Length validation (max 500 characters)
+    - Allows clearing description (null value)
+    - Updates `updated_at` timestamp
+    - Automatic cache revalidation
+    - Comprehensive error handling
+  - Security checks:
+    - Verifies user is authenticated
+    - Confirms user owns the community
+    - Validates slug exists
+    - Prevents unauthorized edits
+
+- **SaveButton Component** (`app/components/save-button.tsx`)
+  - Reusable save button for form actions
+  - Features:
+    - Uses `useFormStatus` for pending detection
+    - Shows "Saving..." with spinner
+    - Disabled during submission
+    - Customizable text and variant
+    - ARIA attributes for accessibility
+  - Similar to SubmitButton but save-focused
+
+- **Loading Skeleton** (`app/r/[id]/loading.tsx`)
+  - Matches page layout for smooth transitions
+  - Features:
+    - Two-column skeleton structure
+    - Card skeletons for posts
+    - Sidebar skeleton matching actual content
+    - Responsive design
+    - Animated loading states
+
+**Page Layout:**
+- Left Column (65%):
+  - Community header with name
+  - Posts section (placeholder for now)
+  - Empty state message
+- Right Column (35%):
+  - About Community card
+  - Community avatar (DiceBear generated)
+  - Community name with link
+  - Creation date with cake icon
+  - Description (editable for creator, read-only for others)
+
+**User Experience:**
+- Creators see editable description form
+- Non-creators see read-only description
+- Toast notifications on successful save
+- Loading states during operations
+- 404 page for invalid community slugs
+- Responsive design (sidebar hidden on mobile)
+- Fresh data on every page load
+
+**Database Integration:**
+- Queries `communities` table by slug
+- Fetches: id, name, slug, description, created_at, created_by
+- Updates description and updated_at fields
+- Maintains foreign key integrity
+- Cache revalidation after updates
+
+**Security Features:**
+- Server-side ownership validation
+- Only creators can edit descriptions
+- Authentication required for edits
+- Proper error messages (no sensitive data exposed)
+- SQL injection protection via parameterized queries
+
+#### Post Creation Feature with Rich Text Editor
+
+**Complete post creation workflow with TipTap editor and image uploads:**
+
+- **Create Post Server Action** (`app/actions.ts`)
+  - Added `createPost` server action for secure post creation
+  - Features:
+    - BetterAuth session validation (redirects to login if not authenticated)
+    - Links to user profile via `auth_user_id` lookup in `users` table
+    - Links to community via `slug` lookup in `communities` table
+    - Automatic post slug generation from title for SEO-friendly URLs
+    - Supports both text and image post types
+    - Content type validation (text or image)
+    - Comprehensive validation:
+      - Title: Required, 3-300 characters
+      - Content: Required for text posts (TipTap JSON)
+      - Image URL: Required for image posts
+    - Error handling with user-friendly messages
+    - Automatic cache revalidation of community page
+    - Redirects to new post page on success (`/r/{slug}/post/{id}`)
+  - Database operations:
+    - Inserts into `posts` table with proper foreign keys
+    - Stores TipTap content as JSON in `content` field
+    - Stores image URLs in `media_url` field
+    - Sets `content_type` enum (text or image)
+    - Links to author via `author_id` → `users.id`
+    - Links to community via `community_id` → `communities.id`
+    - Generates unique post slug from title
+
+- **Post Creation Page** (`app/r/[id]/create/page.tsx`)
+  - Client-side form at `/r/{slug}/create` route
+  - Features:
+    - Tabbed UI for post types (Text vs Image)
+    - TipTap rich text editor with toolbar
+    - UploadThing integration for image uploads
+    - Real-time form validation
+    - Toast notifications for errors
+    - Loading states during submission and uploads
+    - Cancel button to return to community
+  - Text Post Tab:
+    - Title input (required, max 300 chars)
+    - TipTap editor with formatting toolbar:
+      - Bold, Italic formatting
+      - Heading 2 style
+      - Bullet lists and ordered lists
+      - Undo/Redo functionality
+    - Editor stores content as JSON for database
+    - Minimum 200px height with prose styling
+  - Image Post Tab:
+    - Title input (required, max 300 chars)
+    - Image upload dropzone with UploadThing
+    - Drag-and-drop support
+    - File type validation (images only)
+    - File size validation (max 4MB)
+    - Image preview after upload
+    - Remove button to clear uploaded image
+    - Upload progress indicator
+  - Uses `useFormState` for reactive form management
+  - Integrates with `createPost` server action
+  - Accessible form with ARIA attributes
+  - Mobile-responsive design
+
+- **UploadThing Configuration** (`app/api/uploadthing/core.ts`)
+  - Image uploader endpoint with BetterAuth middleware
+  - Features:
+    - Accepts images: png, jpg, jpeg, webp
+    - Max file size: 4MB
+    - Max file count: 1 per upload
+    - Authentication required via BetterAuth session
+    - Returns file URL on completion
+    - Server-side validation and processing
+  - Integrated with Next.js App Router
+  - Type-safe with TypeScript
+
+- **UploadThing Route Handler** (`app/api/uploadthing/route.ts`)
+  - REST API endpoints for file uploads
+  - Automatically handles POST and GET requests
+  - Uses UploadThing SDK for secure file management
+
+- **UploadThing Utilities** (`lib/uploadthing.ts`)
+  - Type-safe React hooks for client-side uploads
+  - `useUploadThing` hook for programmatic uploads
+  - `uploadFiles` helper function
+  - Generated from file router configuration
+  - Full TypeScript support
+
+**User Experience:**
+- Clear visual distinction between post types
+- Rich text formatting with instant preview
+- Image upload with progress feedback
+- Validation errors shown inline
+- Loading spinners during operations
+- Automatic redirect to new post
+- Toast notifications for errors
+- Responsive design works on all screen sizes
+
+**Database Integration:**
+- Creates records in `posts` table with proper schema
+- Title: string (3-300 chars)
+- Content: JSON (TipTap document) for text posts
+- Media URL: string for image posts
+- Content Type: enum ('text' | 'image')
+- Author ID: foreign key to `users.id`
+- Community ID: foreign key to `communities.id`
+- Slug: auto-generated from title
+- Default values applied:
+  - `upvotes`: 0
+  - `downvotes`: 0
+  - `score`: 0
+  - `comment_count`: 0
+  - `is_anonymous`: false
+  - `is_locked`: false
+  - `is_removed`: false
+
+**Security Features:**
+- Server-side session validation before creation
+- Proper foreign key relationships maintained
+- User must be authenticated to create posts
+- File upload authentication via BetterAuth
+- File size and type validation
+- All validation happens on both client and server
+- SQL injection protection via Supabase parameterized queries
+- XSS protection through content sanitization
+
+**Technical Stack:**
+- TipTap 3.x for rich text editing
+  - StarterKit extension bundle
+  - JSON document format
+  - Extensible and customizable
+- UploadThing for file uploads
+  - Secure file storage
+  - CDN-backed delivery
+  - Type-safe React hooks
+  - Built-in progress tracking
+- Shadcn UI Tabs component
+- Form submission via Server Actions
+- Sonner for toast notifications
+
+#### Homepage with Voting and Pagination
+
+**Complete homepage feed with Reddit-style voting system:**
+
+- **Homepage Route** (`app/page.tsx`)
+  - Async server component with server-side data fetching
+  - Features:
+    - Two-column responsive layout (65% posts / 35% sidebar)
+    - Suspense streaming with loading skeletons
+    - Pagination support via URL query params
+    - BetterAuth session awareness
+    - Dynamic sidebar based on authentication state
+  - Data fetching:
+    - Fetches posts with pagination (10 per page)
+    - Includes related data (communities, users, votes)
+    - Vote count calculation
+    - Total post count for pagination
+    - Uses `unstable_noStore` for always-fresh data
+  - Left Column:
+    - Post feed with ShowItems component
+    - Pagination controls
+    - Suspense boundary with fallback skeleton
+  - Right Column:
+    - Welcome card with platform info
+    - Create Community / Browse Communities buttons (authenticated)
+    - Sign Up / Log In buttons (unauthenticated)
+    - Community guidelines card
+    - Platform info with links (About, Help, Terms, Privacy)
+    - Sticky positioning for scroll persistence
+
+- **Vote Handling Server Action** (`app/actions.ts`)
+  - Added `handleVote` server action for upvote/downvote operations
+  - Features:
+    - BetterAuth session validation (redirects to login if not authenticated)
+    - User profile lookup via `auth_user_id`
+    - Toggle vote logic:
+      - Case 1: No existing vote → Create new vote
+      - Case 2: Same vote again → Remove vote (toggle off)
+      - Case 3: Different vote → Update vote type
+    - Vote types: 'upvote' and 'downvote'
+    - Stores in `votes` table with proper foreign keys
+    - Automatic cache revalidation of homepage
+    - Comprehensive error handling
+  - Database operations:
+    - Queries `votes` table by votable_id, user_id, votable_type
+    - Inserts, updates, or deletes vote records
+    - Uses `votable_type` enum to distinguish post vs comment votes
+    - Links to posts via `votable_id` and users via `user_id`
+
+- **PostCard Component** (`app/components/post-card.tsx`)
+  - Server component displaying individual posts
+  - Features:
+    - Upvote/downvote buttons with visual feedback
+    - Vote count display with color coding
+    - User vote status indication (highlighted buttons)
+    - Post title and content preview
+    - Author and community metadata
+    - Timestamp with relative formatting (e.g., "2h ago")
+    - Image preview for image posts
+    - Comment count with icon
+    - Links to post detail view
+    - Disabled voting for unauthenticated users
+  - Vote UI:
+    - ArrowUp/ArrowDown icons from Lucide
+    - Orange highlight for upvotes
+    - Blue highlight for downvotes
+    - Form-based voting with server actions
+    - Hidden input fields for postId
+  - Content handling:
+    - Extracts text from TipTap JSON for preview
+    - 150-character truncation with ellipsis
+    - Displays "[Image Post]" for image content
+    - Shows image thumbnail for image posts
+  - Time formatting:
+    - "just now" for <1 minute
+    - "Xm ago" for minutes
+    - "Xh ago" for hours
+    - "Xd ago" for days
+
+- **ShowItems Component** (`app/components/show-items.tsx`)
+  - Server component rendering list of posts
+  - Features:
+    - Maps over posts array
+    - Renders PostCard for each post
+    - Empty state handling
+    - Vertical stack layout with gap spacing
+  - Empty state:
+    - Centered message
+    - "No posts yet" heading
+    - "Be the first to create a post!" subtext
+
+- **SuspenseCard Component** (`app/components/suspense-card.tsx`)
+  - Loading skeleton for Suspense fallback
+  - Features:
+    - 5 card skeletons matching PostCard layout
+    - Vote section skeleton (up/down/count)
+    - Content section skeleton (metadata, title, preview, actions)
+    - Shadcn UI Skeleton components
+    - Animated loading states
+    - Responsive design
+
+- **Pagination Component** (`app/components/pagination.tsx`)
+  - Client component for page navigation
+  - Features:
+    - Previous/Next buttons with chevron icons
+    - Current page and total pages display
+    - Disabled states for boundary pages
+    - URL query parameter-based navigation
+    - Responsive button labels (hidden on small screens)
+    - useRouter for client-side navigation
+    - useSearchParams for reading current page
+  - Conditional rendering:
+    - Only renders if totalPages > 1
+    - Hides on single-page results
+
+**User Experience:**
+- Fast page loads with streaming Suspense
+- Smooth voting interactions with optimistic UI
+- Clear visual feedback for vote status
+- Pagination for browsing large post lists
+- Responsive design works on all screen sizes
+- Loading skeletons prevent layout shift
+- Empty states guide new users
+- Authentication-aware UI
+
+**Database Integration:**
+- Queries `posts` table with related data
+- Joins with `communities` for community info
+- Joins with `users` for author info
+- Joins with `votes` for vote counts and user votes
+- Vote count calculation on server
+- Pagination using Supabase range queries
+- Total count query for pagination
+- Ordered by created_at descending (newest first)
+
+**Security Features:**
+- Server-side session validation for voting
+- Voting requires authentication
+- Proper foreign key relationships
+- User vote status checks
+- All validation happens on server
+- SQL injection protection via parameterized queries
+- No sensitive data exposed to client
+
+**Technical Implementation:**
+- Next.js 16 Async Server Components
+- Suspense for streaming data
+- Server Actions for mutations
+- Client-side pagination routing
+- Responsive Tailwind CSS
+- Lucide React icons
+- Time-based relative timestamps
+- JSON content parsing for TipTap
+
+#### Individual Post Page with Comments
+
+**Complete post detail view with commenting system:**
+
+- **Post Detail Page** (`app/r/[id]/post/[postId]/page.tsx`)
+  - Async server component with dynamic routing
+  - Features:
+    - Two-column responsive layout (70% post / 30% sidebar)
+    - Full post content display (text or image)
+    - Voting functionality with user vote status
+    - Comment creation and display
+    - Share link with copy-to-clipboard
+    - Community information sidebar
+    - Author and timestamp metadata
+    - Create Post button for authenticated users
+  - Data fetching:
+    - Single post with all related data
+    - Joins with communities, users, votes, comments tables
+    - Nested joins for comment authors
+    - Vote count calculation
+    - User vote status check
+    - Uses `unstable_noStore` for fresh data
+  - Content rendering:
+    - TipTap JSON parsing for text posts
+    - Extracts and formats paragraphs, headings, lists
+    - Image display for image posts
+    - Prose styling with proper whitespace
+  - Left Column:
+    - Post card with full content
+    - Voting controls (up/down/count)
+    - Action buttons (comments count, share)
+    - Comment form (authenticated users only)
+    - Comments list with avatars
+    - Login prompt for unauthenticated users
+  - Right Column:
+    - About Community card
+    - Community avatar (DiceBear)
+    - Community description
+    - Created date
+    - Create Post button
+    - Sticky positioning
+
+- **Comment Creation Server Action** (`app/actions.ts`)
+  - Added `createComment` server action for posting comments
+  - Features:
+    - BetterAuth session validation (redirects to login if not authenticated)
+    - User profile lookup via `auth_user_id`
+    - Post existence verification
+    - Comment text validation (required, max 10,000 chars)
+    - Inserts into `comments` table with proper foreign keys
+    - Links to posts via `post_id` and users via `author_id`
+    - Gets community slug for revalidation
+    - Automatic cache revalidation of post page
+    - Comprehensive error handling
+  - Database operations:
+    - Verifies post exists before allowing comment
+    - Inserts comment with content, post_id, author_id
+    - Returns success/error response for UI feedback
+
+- **CommentForm Component** (`app/components/comment-form.tsx`)
+  - Client component for comment submission
+  - Features:
+    - Textarea input with placeholder
+    - Character limit display (max 10,000)
+    - Form reset after successful submission
+    - Toast notifications for success/error
+    - Loading states during submission
+    - Error display inline
+    - Uses useFormState for reactive state
+    - Hidden postId field
+  - UX enhancements:
+    - Automatic form reset on success
+    - Success toast notification
+    - Error toast with retry option
+    - Submit button with loading state
+    - Card border and background
+
+- **CopyLink Component** (`app/components/copy-link.tsx`)
+  - Client component for sharing posts
+  - Features:
+    - One-click copy to clipboard
+    - Visual feedback with icon change
+    - Toast notification on success
+    - Copied state with auto-reset (2 seconds)
+    - Error handling for clipboard API failures
+    - Link icon → Check icon transition
+    - Ghost button styling
+  - Uses Clipboard API:
+    - `navigator.clipboard.writeText()`
+    - Graceful fallback on error
+    - Success/error toast notifications
+
+- **Loading Skeleton** (`app/r/[id]/post/[postId]/loading.tsx`)
+  - Matches post page layout exactly
+  - Features:
+    - Two-column skeleton structure
+    - Post card skeleton (metadata, title, content, actions)
+    - Comment form skeleton
+    - Comments list skeleton (3 cards)
+    - Community sidebar skeleton
+    - Shadcn UI Skeleton components
+    - Animated loading states
+    - Responsive design
+
+**User Experience:**
+- Full post content visibility with proper formatting
+- Voting directly from post page
+- Real-time comment posting with instant UI updates
+- Share functionality for easy link copying
+- Authentication-aware commenting (login prompt when needed)
+- Loading skeletons prevent layout shift
+- Community context always visible in sidebar
+- Responsive design works on all screen sizes
+
+**Database Integration:**
+- Queries `posts` table with nested joins:
+  - `communities` for community info
+  - `users` for post author
+  - `votes` for vote counts and user votes
+  - `comments` with nested `users` for comment authors
+- Inserts into `comments` table with proper foreign keys
+- Comment schema:
+  - `content`: Text content (max 10,000 chars)
+  - `post_id`: Foreign key to posts
+  - `author_id`: Foreign key to users
+  - `created_at`: Timestamp
+- Ordered by created_at ascending (oldest first)
+
+**Security Features:**
+- Server-side session validation for commenting
+- Commenting requires authentication
+- Post existence verification before comment creation
+- Proper foreign key relationships
+- User vote status checks
+- All validation happens on server
+- SQL injection protection via parameterized queries
+- No sensitive data exposed to client
+
+**Technical Implementation:**
+- Next.js 16 Dynamic Routes with params
+- Async server components for data fetching
+- Server Actions for comment mutations
+- Client components for interactivity (form, copy)
+- Clipboard API for link sharing
+- TipTap JSON parsing and rendering
+- Responsive Tailwind CSS
+- Lucide React icons
+- DiceBear avatars for communities
+- Full URL generation for sharing
+- Cache revalidation with revalidatePath
+
 #### Authentication System (BetterAuth + Supabase Integration)
 
 **Complete authentication system with multiple providers:**
