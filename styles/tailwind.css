@@ -99,7 +99,7 @@
        SIDEBAR COLORS
        Navigation and sidebar-specific color tokens
        -------------------------------------------------------------------------- */
-    --color-sidebar: var(--sidebar);
+    --color-sidebar-background: var(--sidebar-background);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
     --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -143,62 +143,63 @@
     --radius: 0.625rem; /* 10px - Base border radius */
 
     /* --------------------------------------------------------------------------
-       BASE COLORS (Light Mode)
+       BASE COLORS (Light Mode) - Orange Theme
        Using OKLCH color space for better color consistency
        -------------------------------------------------------------------------- */
-    --background: oklch(1 0 0);                    /* Pure white background */
-    --foreground: oklch(0.145 0 0);                /* Near black text */
+    --background: 0 0% 100%;                       /* Pure white background */
+    --foreground: 20 14.3% 4.1%;                   /* Dark foreground text */
 
     /* Card & Surface Colors */
-    --card: oklch(1 0 0);                          /* Card background */
-    --card-foreground: oklch(0.145 0 0);           /* Card text */
+    --card: 0 0% 100%;                             /* Card background */
+    --card-foreground: 20 14.3% 4.1%;              /* Card text */
 
     /* Popover Colors */
-    --popover: oklch(1 0 0);                       /* Popover background */
-    --popover-foreground: oklch(0.145 0 0);        /* Popover text */
+    --popover: 0 0% 100%;                          /* Popover background */
+    --popover-foreground: 20 14.3% 4.1%;           /* Popover text */
 
-    /* Interactive Element Colors */
-    --primary: oklch(0.205 0 0);                   /* Primary action color */
-    --primary-foreground: oklch(0.985 0 0);        /* Text on primary */
+    /* Interactive Element Colors - Orange Theme */
+    --primary: 24.6 95% 53.1%;                     /* Orange primary */
+    --primary-foreground: 60 9.1% 97.8%;           /* Text on primary */
 
-    --secondary: oklch(0.97 0 0);                  /* Secondary background */
-    --secondary-foreground: oklch(0.205 0 0);      /* Secondary text */
+    --secondary: 60 4.8% 95.9%;                    /* Secondary background */
+    --secondary-foreground: 24 9.8% 10%;           /* Secondary text */
 
-    --muted: oklch(0.97 0 0);                      /* Muted background */
-    --muted-foreground: oklch(0.556 0 0);          /* Muted text */
+    --muted: 60 4.8% 95.9%;                        /* Muted background */
+    --muted-foreground: 25 5.3% 44.7%;             /* Muted text */
 
-    --accent: oklch(0.97 0 0);                     /* Accent background */
-    --accent-foreground: oklch(0.205 0 0);         /* Accent text */
+    --accent: 60 4.8% 95.9%;                       /* Accent background */
+    --accent-foreground: 24 9.8% 10%;              /* Accent text */
 
     /* Destructive/Error Colors */
-    --destructive: oklch(0.577 0.245 27.325);      /* Error/destructive actions */
+    --destructive: 0 84.2% 60.2%;                  /* Error/destructive actions */
+    --destructive-foreground: 60 9.1% 97.8%;       /* Text on destructive */
 
     /* Border & Input Colors */
-    --border: oklch(0.922 0 0);                    /* Default border color */
-    --input: oklch(0.922 0 0);                     /* Input border color */
-    --ring: oklch(0.708 0 0);                      /* Focus ring color */
+    --border: 20 5.9% 90%;                         /* Default border color */
+    --input: 20 5.9% 90%;                          /* Input border color */
+    --ring: 24.6 95% 53.1%;                        /* Focus ring color (orange) */
 
     /* --------------------------------------------------------------------------
-       CHART COLORS (Light Mode)
+       CHART COLORS (Light Mode) - Orange Theme
        Data visualization palette
        -------------------------------------------------------------------------- */
-    --chart-1: oklch(0.646 0.222 41.116);          /* Chart color 1 - Orange */
-    --chart-2: oklch(0.6 0.118 184.704);           /* Chart color 2 - Teal */
-    --chart-3: oklch(0.398 0.07 227.392);          /* Chart color 3 - Blue */
-    --chart-4: oklch(0.828 0.189 84.429);          /* Chart color 4 - Green */
-    --chart-5: oklch(0.769 0.188 70.08);           /* Chart color 5 - Yellow */
+    --chart-1: 12 76% 61%;                         /* Chart color 1 - Orange */
+    --chart-2: 173 58% 39%;                        /* Chart color 2 - Teal */
+    --chart-3: 197 37% 24%;                        /* Chart color 3 - Blue */
+    --chart-4: 43 74% 66%;                         /* Chart color 4 - Yellow */
+    --chart-5: 27 87% 67%;                         /* Chart color 5 - Coral */
 
     /* --------------------------------------------------------------------------
-       SIDEBAR COLORS (Light Mode)
+       SIDEBAR COLORS (Light Mode) - Orange Theme
        -------------------------------------------------------------------------- */
-    --sidebar: oklch(0.985 0 0);                   /* Sidebar background */
-    --sidebar-foreground: oklch(0.145 0 0);        /* Sidebar text */
-    --sidebar-primary: oklch(0.205 0 0);           /* Sidebar primary */
-    --sidebar-primary-foreground: oklch(0.985 0 0);/* Sidebar primary text */
-    --sidebar-accent: oklch(0.97 0 0);             /* Sidebar accent */
-    --sidebar-accent-foreground: oklch(0.205 0 0); /* Sidebar accent text */
-    --sidebar-border: oklch(0.922 0 0);            /* Sidebar border */
-    --sidebar-ring: oklch(0.708 0 0);              /* Sidebar focus ring */
+    --sidebar-background: 0 0% 98%;                /* Sidebar background */
+    --sidebar-foreground: 240 5.3% 26.1%;          /* Sidebar text */
+    --sidebar-primary: 24.6 95% 53.1%;             /* Sidebar primary (orange) */
+    --sidebar-primary-foreground: 60 9.1% 97.8%;   /* Sidebar primary text */
+    --sidebar-accent: 60 4.8% 95.9%;               /* Sidebar accent */
+    --sidebar-accent-foreground: 24 9.8% 10%;      /* Sidebar accent text */
+    --sidebar-border: 220 13% 91%;                 /* Sidebar border */
+    --sidebar-ring: 24.6 95% 53.1%;                /* Sidebar focus ring */
 
     /* --------------------------------------------------------------------------
        1DXR BRAND COLORS (Light Mode)
@@ -238,62 +239,63 @@
  */
 .dark {
     /* --------------------------------------------------------------------------
-       BASE COLORS (Dark Mode)
+       BASE COLORS (Dark Mode) - Orange Theme
        Inverted color scheme for dark theme
        -------------------------------------------------------------------------- */
-    --background: oklch(0.145 0 0);                /* Dark background */
-    --foreground: oklch(0.985 0 0);                /* Light text */
+    --background: 20 14.3% 4.1%;                   /* Dark background */
+    --foreground: 60 9.1% 97.8%;                   /* Light text */
 
     /* Card & Surface Colors */
-    --card: oklch(0.205 0 0);                      /* Card background */
-    --card-foreground: oklch(0.985 0 0);           /* Card text */
+    --card: 20 14.3% 4.1%;                         /* Card background */
+    --card-foreground: 60 9.1% 97.8%;              /* Card text */
 
     /* Popover Colors */
-    --popover: oklch(0.205 0 0);                   /* Popover background */
-    --popover-foreground: oklch(0.985 0 0);        /* Popover text */
+    --popover: 20 14.3% 4.1%;                      /* Popover background */
+    --popover-foreground: 60 9.1% 97.8%;           /* Popover text */
 
-    /* Interactive Element Colors */
-    --primary: oklch(0.922 0 0);                   /* Primary action color */
-    --primary-foreground: oklch(0.205 0 0);        /* Text on primary */
+    /* Interactive Element Colors - Orange Theme */
+    --primary: 20.5 90.2% 48.2%;                   /* Orange primary (darker) */
+    --primary-foreground: 60 9.1% 97.8%;           /* Text on primary */
 
-    --secondary: oklch(0.269 0 0);                 /* Secondary background */
-    --secondary-foreground: oklch(0.985 0 0);      /* Secondary text */
+    --secondary: 12 6.5% 15.1%;                    /* Secondary background */
+    --secondary-foreground: 60 9.1% 97.8%;         /* Secondary text */
 
-    --muted: oklch(0.269 0 0);                     /* Muted background */
-    --muted-foreground: oklch(0.708 0 0);          /* Muted text */
+    --muted: 12 6.5% 15.1%;                        /* Muted background */
+    --muted-foreground: 24 5.4% 63.9%;             /* Muted text */
 
-    --accent: oklch(0.269 0 0);                    /* Accent background */
-    --accent-foreground: oklch(0.985 0 0);         /* Accent text */
+    --accent: 12 6.5% 15.1%;                       /* Accent background */
+    --accent-foreground: 60 9.1% 97.8%;            /* Accent text */
 
     /* Destructive/Error Colors */
-    --destructive: oklch(0.704 0.191 22.216);      /* Error/destructive actions */
+    --destructive: 0 72.2% 50.6%;                  /* Error/destructive actions */
+    --destructive-foreground: 60 9.1% 97.8%;       /* Text on destructive */
 
     /* Border & Input Colors */
-    --border: oklch(1 0 0 / 10%);                  /* Subtle border */
-    --input: oklch(1 0 0 / 15%);                   /* Input border */
-    --ring: oklch(0.556 0 0);                      /* Focus ring */
+    --border: 12 6.5% 15.1%;                       /* Subtle border */
+    --input: 12 6.5% 15.1%;                        /* Input border */
+    --ring: 20.5 90.2% 48.2%;                      /* Focus ring (orange) */
 
     /* --------------------------------------------------------------------------
-       CHART COLORS (Dark Mode)
+       CHART COLORS (Dark Mode) - Orange Theme
        Adjusted for dark backgrounds
        -------------------------------------------------------------------------- */
-    --chart-1: oklch(0.488 0.243 264.376);         /* Chart color 1 - Purple */
-    --chart-2: oklch(0.696 0.17 162.48);           /* Chart color 2 - Green */
-    --chart-3: oklch(0.769 0.188 70.08);           /* Chart color 3 - Yellow */
-    --chart-4: oklch(0.627 0.265 303.9);           /* Chart color 4 - Pink */
-    --chart-5: oklch(0.645 0.246 16.439);          /* Chart color 5 - Orange */
+    --chart-1: 220 70% 50%;                        /* Chart color 1 - Blue */
+    --chart-2: 160 60% 45%;                        /* Chart color 2 - Green */
+    --chart-3: 30 80% 55%;                         /* Chart color 3 - Orange */
+    --chart-4: 280 65% 60%;                        /* Chart color 4 - Purple */
+    --chart-5: 340 75% 55%;                        /* Chart color 5 - Pink */
 
     /* --------------------------------------------------------------------------
-       SIDEBAR COLORS (Dark Mode)
+       SIDEBAR COLORS (Dark Mode) - Orange Theme
        -------------------------------------------------------------------------- */
-    --sidebar: oklch(0.205 0 0);                   /* Sidebar background */
-    --sidebar-foreground: oklch(0.985 0 0);        /* Sidebar text */
-    --sidebar-primary: oklch(0.488 0.243 264.376); /* Sidebar primary */
-    --sidebar-primary-foreground: oklch(0.985 0 0);/* Sidebar primary text */
-    --sidebar-accent: oklch(0.269 0 0);            /* Sidebar accent */
-    --sidebar-accent-foreground: oklch(0.985 0 0); /* Sidebar accent text */
-    --sidebar-border: oklch(1 0 0 / 10%);          /* Sidebar border */
-    --sidebar-ring: oklch(0.556 0 0);              /* Sidebar focus ring */
+    --sidebar-background: 240 5.9% 10%;            /* Sidebar background */
+    --sidebar-foreground: 240 4.8% 95.9%;          /* Sidebar text */
+    --sidebar-primary: 20.5 90.2% 48.2%;           /* Sidebar primary (orange) */
+    --sidebar-primary-foreground: 60 9.1% 97.8%;   /* Sidebar primary text */
+    --sidebar-accent: 12 6.5% 15.1%;               /* Sidebar accent */
+    --sidebar-accent-foreground: 60 9.1% 97.8%;    /* Sidebar accent text */
+    --sidebar-border: 240 3.7% 15.9%;              /* Sidebar border */
+    --sidebar-ring: 20.5 90.2% 48.2%;              /* Sidebar focus ring */
 
     /* --------------------------------------------------------------------------
        1DXR BRAND COLORS (Dark Mode)
@@ -492,9 +494,10 @@
        Button styles consistent with brand guidelines
        -------------------------------------------------------------------------- */
     .btn-brand-primary {
-        @apply bg-brand-gradient text-white font-semibold px-6 py-3 rounded-lg;
+        background: linear-gradient(135deg, var(--brand-gradient-start) 0%, var(--brand-gradient-end) 100%);
+        @apply text-white font-semibold px-6 py-3 rounded-lg;
         @apply hover:opacity-90 transition-all duration-200;
-        @apply shadow-brand hover:shadow-brand-lg;
+        /* @apply shadow-brand hover:shadow-brand-lg; */
     }
 
     .btn-brand-secondary {
@@ -517,8 +520,9 @@
     }
 
     .card-brand-gradient {
-        @apply bg-brand-gradient text-white rounded-xl p-6;
-        @apply shadow-brand;
+        background: linear-gradient(135deg, var(--brand-gradient-start) 0%, var(--brand-gradient-end) 100%);
+        @apply text-white rounded-xl p-6;
+        /* @apply shadow-brand; */
     }
 
     /* --------------------------------------------------------------------------
@@ -635,6 +639,6 @@
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
-        }
+    }
     }
 }

@@ -408,7 +408,7 @@ export default function SignUpPage() {
         <CardFooter>
           <p className="px-8 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/login" className="hover:text-brand underline underline-offset-4">
+            <Link href="/login" className="hover:text-primary underline underline-offset-4">
               Sign in
             </Link>
           </p>
@@ -418,11 +418,11 @@ export default function SignUpPage() {
       {/* Terms and Privacy */}
       <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
         By clicking continue, you agree to our{' '}
-        <Link href="/terms" className="hover:text-brand underline underline-offset-4">
+        <Link href="/terms" className="hover:text-primary underline underline-offset-4">
           Terms of Service
         </Link>{' '}
         and{' '}
-        <Link href="/privacy" className="hover:text-brand underline underline-offset-4">
+        <Link href="/privacy" className="hover:text-primary underline underline-offset-4">
           Privacy Policy
         </Link>
         .
