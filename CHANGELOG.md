@@ -99,6 +99,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSS variable-based theming for runtime theme switching
 - Proper contrast ratios maintained in both themes
 
+#### Auth-Aware Navigation with BetterAuth Integration
+
+**Dynamic navbar with session-based authentication state:**
+
+- **Updated NavBar Component** (`app/components/navBar.tsx`)
+  - Converted from client component to async server component
+  - Fetches user session using BetterAuth's `auth()` helper on the server
+  - Conditional rendering based on authentication state:
+    - **Unauthenticated users** see "Sign Up" and "Log In" buttons linking to `/signup` and `/login`
+    - **Authenticated users** see UserDropdown with profile menu
+  - Maintains all existing features (responsive logo, search bar, theme toggle)
+  - Zero-config server-side session fetching (no loading states needed)
+  - Improved performance with server-side rendering
+
+- **New UserDropdown Component** (`app/components/user-dropdown.tsx`)
+  - Client-side dropdown menu for authenticated users
+  - Uses Shadcn UI DropdownMenu components
+  - Features:
+    - User avatar display with fallback to default icon
+    - User name and email display in dropdown header
+    - "Create Community" link (routes to `/r/create`)
+    - "Profile" link (routes to `/profile`)
+    - "Settings" link (routes to `/settings`)
+    - Logout button with loading state
+  - Integrates with BetterAuth `signOut()` method
+  - Accessible with ARIA labels and keyboard navigation
+  - Smooth hover transitions and focus states
+  - Graceful error handling for logout failures
+
+**User Experience Improvements:**
+- Instant session detection (server-rendered, no loading spinners)
+- Clear visual distinction between authenticated and unauthenticated states
+- Seamless logout with loading feedback
+- Avatar display from OAuth providers (Google, Facebook) or user profile
+- Consistent brand styling with Tailwind utilities
+
+**Technical Implementation:**
+- Server component fetches session without exposing auth logic to client
+- Client components handle only interactive elements (dropdown, logout)
+- Separation of concerns: server for data fetching, client for interactivity
+- Type-safe props using TypeScript
+- Follows Next.js 16 App Router conventions
+
 #### Authentication System (BetterAuth + Supabase Integration)
 
 **Complete authentication system with multiple providers:**
