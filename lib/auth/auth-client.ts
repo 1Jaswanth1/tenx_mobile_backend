@@ -1,24 +1,25 @@
 // lib/auth/auth-client.ts
-// BetterAuth client configuration for client-side authentication operations
+// Better Auth Client Configuration for React
+//
+// This file creates the auth client for client-side authentication operations
+// with support for Google, Facebook, and username/password authentication.
 
 import { createAuthClient } from 'better-auth/react';
 
 /**
- * BetterAuth Client Configuration
+ * Better Auth Client Configuration
  *
- * This file creates the auth client for client-side authentication operations.
- * Use this in React components, client-side hooks, and forms.
- *
- * Features:
- * - Sign up / Sign in / Sign out
+ * This client provides authentication functionality for:
+ * - Email/Password sign up and sign in
+ * - Google OAuth
+ * - Facebook OAuth
  * - Session management
  * - User profile updates
- * - OAuth social authentication
  * - React hooks for reactive state
  *
  * Usage Examples:
  *
- * 1. Sign Up
+ * 1. Email/Password Sign Up
  * ```typescript
  * import { authClient } from '@/lib/auth/auth-client';
  *
@@ -26,10 +27,11 @@ import { createAuthClient } from 'better-auth/react';
  *   email: 'user@example.com',
  *   password: 'secure-password',
  *   name: 'John Doe',
+ *   username: 'johndoe',
  * });
  * ```
  *
- * 2. Sign In
+ * 2. Email/Password Sign In
  * ```typescript
  * await authClient.signIn.email({
  *   email: 'user@example.com',
@@ -37,7 +39,7 @@ import { createAuthClient } from 'better-auth/react';
  * });
  * ```
  *
- * 3. Social OAuth
+ * 3. Google OAuth
  * ```typescript
  * await authClient.signIn.social({
  *   provider: 'google',
@@ -45,21 +47,30 @@ import { createAuthClient } from 'better-auth/react';
  * });
  * ```
  *
- * 4. Get Session (React Hook)
+ * 4. Facebook OAuth
+ * ```typescript
+ * await authClient.signIn.social({
+ *   provider: 'facebook',
+ *   callbackURL: '/dashboard',
+ * });
+ * ```
+ *
+ * 5. Get Session (React Hook)
  * ```typescript
  * import { useSession } from '@/lib/auth/auth-client';
  *
  * function MyComponent() {
- *   const { data: session, isPending } = useSession();
+ *   const { data: session, isPending, error } = useSession();
  *
  *   if (isPending) return <div>Loading...</div>;
+ *   if (error) return <div>Error: {error.message}</div>;
  *   if (!session) return <div>Not logged in</div>;
  *
  *   return <div>Welcome {session.user.name}!</div>;
  * }
  * ```
  *
- * 5. Sign Out
+ * 6. Sign Out
  * ```typescript
  * await authClient.signOut();
  * ```
@@ -70,26 +81,51 @@ import { createAuthClient } from 'better-auth/react';
 export const authClient = createAuthClient({
   /**
    * Base URL for authentication endpoints
-   * This should point to your Next.js API route that handles BetterAuth
+   * Points to Next.js API route that handles Better Auth
    *
    * The API route is located at: /app/api/auth/[...all]/route.ts
    */
   baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
 
   /**
-   * Fetch options
+   * Fetch Configuration
    * Configure how the client makes HTTP requests
    */
   fetchOptions: {
-    credentials: 'include', // Include cookies in requests
+    /**
+     * Include credentials (cookies) in all requests
+     * Required for cookie-based authentication
+     */
+    credentials: 'include',
+
+    /**
+     * Default headers for all requests
+     */
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    /**
+     * Request timeout (30 seconds)
+     */
+    timeout: 30000,
+
+    /**
+     * Retry configuration for failed requests
+     */
+    retry: {
+      attempts: 3,
+      delay: 1000, // 1 second
+      statusCodes: [408, 429, 500, 502, 503, 504], // Retry on these status codes
+    },
   },
 });
 
 /**
  * Export individual methods for convenience
- * This allows you to import specific methods instead of the entire client
+ * Allows importing specific methods instead of entire client
  *
- * Example usage:
+ * Example:
  * import { signIn, signOut, useSession } from '@/lib/auth/auth-client';
  */
 export const {
@@ -99,10 +135,16 @@ export const {
   useSession,
   getSession,
   updateUser,
+  changeEmail,
+  changePassword,
+  linkSocial,
+  unlinkAccount,
+  deleteUser,
 } = authClient;
 
 /**
  * Helper Hooks
+ * Convenient hooks for common authentication patterns
  */
 
 /**
@@ -113,9 +155,12 @@ export const {
  * Usage:
  * ```typescript
  * const isAuthenticated = useIsAuthenticated();
+ * if (!isAuthenticated) {
+ *   return <LoginPrompt />;
+ * }
  * ```
  */
-export function useIsAuthenticated() {
+export function useIsAuthenticated(): boolean {
   const { data: session } = useSession();
   return !!session?.user;
 }
@@ -153,18 +198,164 @@ export function useRequireAuth(redirectTo: string = '/login') {
   const { data: session, isPending } = useSession();
 
   if (!isPending && !session?.user) {
-    window.location.href = redirectTo;
+    if (typeof window !== 'undefined') {
+      window.location.href = redirectTo;
+    }
   }
 
   return { session, isPending };
 }
 
 /**
- * Auth State Type
- * Use this for typing auth state in components
+ * Authentication Error Handler
+ * Standardized error handling for auth operations
+ *
+ * Usage:
+ * ```typescript
+ * const { error } = await authClient.signIn.email({...});
+ * if (error) {
+ *   handleAuthError(error);
+ * }
+ * ```
  */
-export type AuthSession = NonNullable<
-  ReturnType<typeof useSession>['data']
->;
+export function handleAuthError(error: any) {
+  const errorMessages: Record<string, string> = {
+    USER_ALREADY_EXISTS: 'An account with this email already exists.',
+    INVALID_CREDENTIALS: 'Invalid email or password.',
+    USER_NOT_FOUND: 'No account found with this email.',
+    EMAIL_NOT_VERIFIED: 'Please verify your email before signing in.',
+    ACCOUNT_LOCKED: 'Your account has been locked. Please contact support.',
+    ACCOUNT_BANNED: 'Your account has been banned.',
+    PASSWORD_TOO_WEAK: 'Password is too weak. Please use a stronger password.',
+    RATE_LIMIT_EXCEEDED: 'Too many attempts. Please try again later.',
+    SESSION_EXPIRED: 'Your session has expired. Please sign in again.',
+    NETWORK_ERROR: 'Network error. Please check your connection.',
+    UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
+  };
 
+  const message = errorMessages[error.code] || errorMessages.UNKNOWN_ERROR;
+  return message;
+}
+
+/**
+ * Social Provider Configuration
+ * Helper to get provider-specific settings
+ */
+export const socialProviders = {
+  google: {
+    name: 'Google',
+    icon: 'google',
+    color: '#DB4437',
+  },
+  facebook: {
+    name: 'Facebook',
+    icon: 'facebook',
+    color: '#1877F2',
+  },
+} as const;
+
+/**
+ * Form Validation Helpers
+ * Client-side validation for authentication forms
+ */
+
+export const validation = {
+  /**
+   * Validate email format
+   */
+  email: (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  },
+
+  /**
+   * Validate password strength
+   * Minimum 8 characters, at least one uppercase, one lowercase, one number
+   */
+  password: (password: string): { valid: boolean; message?: string } => {
+    if (password.length < 8) {
+      return { valid: false, message: 'Password must be at least 8 characters long.' };
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      return { valid: false, message: 'Password must contain at least one uppercase letter.' };
+    }
+
+    if (!/[a-z]/.test(password)) {
+      return { valid: false, message: 'Password must contain at least one lowercase letter.' };
+    }
+
+    if (!/[0-9]/.test(password)) {
+      return { valid: false, message: 'Password must contain at least one number.' };
+    }
+
+    return { valid: true };
+  },
+
+  /**
+   * Validate username
+   * Alphanumeric, underscores, hyphens only. 3-30 characters.
+   */
+  username: (username: string): { valid: boolean; message?: string } => {
+    if (username.length < 3) {
+      return { valid: false, message: 'Username must be at least 3 characters long.' };
+    }
+
+    if (username.length > 30) {
+      return { valid: false, message: 'Username must be no more than 30 characters.' };
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return { valid: false, message: 'Username can only contain letters, numbers, underscores, and hyphens.' };
+    }
+
+    return { valid: true };
+  },
+};
+
+/**
+ * Auth State Type Definitions
+ * Use these for typing auth state in components
+ */
+export type AuthSession = NonNullable<ReturnType<typeof useSession>['data']>;
 export type AuthUser = NonNullable<AuthSession['user']>;
+export type AuthError = { code: string; message: string };
+
+/**
+ * Authentication Status Enum
+ * Use for conditional rendering based on auth state
+ */
+export enum AuthStatus {
+  LOADING = 'loading',
+  AUTHENTICATED = 'authenticated',
+  UNAUTHENTICATED = 'unauthenticated',
+  ERROR = 'error',
+}
+
+/**
+ * Get current authentication status
+ *
+ * Usage:
+ * ```typescript
+ * const status = useAuthStatus();
+ *
+ * switch (status) {
+ *   case AuthStatus.LOADING:
+ *     return <Spinner />;
+ *   case AuthStatus.AUTHENTICATED:
+ *     return <Dashboard />;
+ *   case AuthStatus.UNAUTHENTICATED:
+ *     return <LoginPage />;
+ *   case AuthStatus.ERROR:
+ *     return <ErrorMessage />;
+ * }
+ * ```
+ */
+export function useAuthStatus(): AuthStatus {
+  const { data: session, isPending, error } = useSession();
+
+  if (isPending) return AuthStatus.LOADING;
+  if (error) return AuthStatus.ERROR;
+  if (session?.user) return AuthStatus.AUTHENTICATED;
+  return AuthStatus.UNAUTHENTICATED;
+}
